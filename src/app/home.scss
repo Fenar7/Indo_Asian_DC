@@ -15,6 +15,10 @@
 }
 
 .shop-page__header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: $pure-white;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -261,6 +265,15 @@
   padding: 0;
   cursor: pointer;
   text-decoration: none;
+  transition: transform 0.18s ease;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 
   img {
     width: 30px;
@@ -340,6 +353,10 @@
 }
 
 .shop-chip-row {
+  position: sticky;
+  top: 101px;           /* stick just below the header */
+  z-index: 190;
+  background: $pure-white;
   display: flex;
   gap: 20px;
   overflow-x: auto;
@@ -363,10 +380,32 @@
     font-weight: 400;
     white-space: nowrap;
     cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+      border-color: $main-cta-red;
+      color: $main-cta-red;
+      background: rgba($main-cta-red, 0.04);
+      box-shadow: 0 2px 12px rgba($main-cta-red, 0.12);
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &.is-active {
+      border-color: $main-cta-red;
+      background: rgba($main-cta-red, 0.07);
+      color: $main-cta-red;
+    }
   }
 }
 
 .shop-filter-bar {
+  position: sticky;
+  top: 178px;           /* 101 header + 77 chip row */
+  z-index: 180;
+  background: $pure-white;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -391,17 +430,30 @@
   gap: 14px;
   border: 0;
   background: transparent;
-  padding: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
   color: $pure-black;
   font-family: $font-sf-pro;
   font-size: 19px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    background: rgba($pure-black, 0.05);
+  }
+
+  &:active {
+    background: rgba($pure-black, 0.08);
+  }
 
   &.is-active {
     color: $main-cta-red;
+
+    &:hover {
+      background: rgba($main-cta-red, 0.06);
+    }
   }
 
   img {
@@ -695,6 +747,17 @@
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
+  &:hover {
+    border-color: rgba($pure-black, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: #fafafa;
+  }
+
+  &:active {
+    background: #f3f3f3;
+  }
 
   img {
     width: 16px;
@@ -738,6 +801,17 @@
     font-weight: 400;
     text-align: left;
     cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, padding-left 0.18s ease;
+
+    &:hover:not(.is-active) {
+      background: rgba($pure-black, 0.04);
+      color: $pure-black;
+      padding-left: 26px;
+    }
+
+    &:active {
+      background: rgba($pure-black, 0.07);
+    }
   }
 
   .is-active {
@@ -1005,10 +1079,28 @@
     font-size: 16px;
     font-weight: 400;
     cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.18s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      background: $main-cta-red;
+      color: $pure-white;
+      box-shadow: 0 4px 16px rgba($main-cta-red, 0.35);
+      transform: translateY(-1px);
+
+      img {
+        filter: brightness(10);
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
 
     img {
       width: 16px;
       height: 16px;
+      transition: filter 0.2s ease;
     }
   }
 }
@@ -1020,15 +1112,25 @@
 }
 
 .shop-cart-panel {
-  min-height: 100%;
+  /* Sticky on the grid column itself — this is the correct approach */
+  position: sticky;
+  top: 235px;                   /* below header(101) + chips(77) + filter(57) */
+  height: calc(100vh - 235px); /* fill remaining viewport */
+  align-self: start;            /* critical: grid item must not stretch */
   border-left: 1px solid $stroke-grey;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;             /* clip — only items-list scrolls inside */
 }
 
 .shop-cart-panel__inner {
-  position: sticky;
-  top: 24px;
-  min-height: 1201px;
-  padding: 26px 26px 0;
+  /* No longer sticky — the parent grid column handles that */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 26px 26px 24px;
+  overflow: hidden;
 
   h2 {
     margin: 0;
@@ -1037,23 +1139,26 @@
     font-size: 22px;
     font-weight: 700;
     line-height: 1;
+    flex-shrink: 0;
   }
 }
 
 .shop-cart-panel__filled {
   display: flex;
   flex-direction: column;
+  flex: 1;          // take all remaining height inside the sticky inner
+  min-height: 0;    // allow flex children to shrink below content
   padding-top: 18px;
-  min-height: 0;
+  overflow: hidden;
 }
 
 .shop-cart-panel__items-list {
   display: grid;
   gap: 0;
-  max-height: 340px;
+  flex: 1;               // grow to fill available space
+  min-height: 0;         // allow shrinking so subtotal stays visible
   overflow-y: auto;
   scrollbar-width: thin;
-  margin-bottom: 16px;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -1144,6 +1249,15 @@
   border: 0;
   padding: 0;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    filter: brightness(0.92);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
 
   img {
     width: 11px;
@@ -1167,6 +1281,16 @@
   background: transparent;
   padding: 0;
   cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+
+  &:hover {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
 
   img {
     width: 21px;
@@ -1180,7 +1304,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-top: auto;
+  flex-shrink: 0;       // never let this compress
+  margin-top: auto;     // pushes everything to the bottom
   padding-top: 18px;
   border-top: 1px solid $stroke-grey;
 
@@ -1203,6 +1328,7 @@
   }
 }
 
+
 .shop-cart-panel__checkout {
   display: inline-flex;
   align-items: center;
@@ -1211,6 +1337,7 @@
   width: 100%;
   height: 37px;
   margin-top: 18px;
+  flex-shrink: 0;   // always visible, never squished
   border: 0;
   border-radius: 6px;
   background: $main-cta-red;
@@ -1219,11 +1346,29 @@
   font-size: 16px;
   font-weight: 400;
   cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease;
+  text-decoration: none;
+
+  &:hover {
+    background: color-mix(in srgb, $main-cta-red 85%, #000);
+    box-shadow: 0 6px 20px rgba($main-cta-red, 0.4);
+    transform: translateY(-1px);
+
+    img {
+      transform: translateX(3px);
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba($main-cta-red, 0.3);
+  }
 
   img {
     width: 16px;
     height: 16px;
     object-fit: contain;
+    transition: transform 0.2s ease;
   }
 }
 
