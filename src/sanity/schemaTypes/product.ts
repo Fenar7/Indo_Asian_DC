@@ -19,6 +19,17 @@ export const productType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "slug",
+      title: "Slug",
+      type: "slug",
+      options: {
+        source: "name",
+        maxLength: 96,
+      },
+      description: "Auto-generated from product name. Used for product URL.",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       name: "code",
       title: "Product Code",
       type: "string",

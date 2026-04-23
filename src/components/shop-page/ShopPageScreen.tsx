@@ -2,6 +2,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
 
 const brandLogo =
   "https://www.figma.com/api/mcp/asset/06feb199-6ba2-4db7-8434-7cd5b19f61a2";
@@ -50,6 +53,7 @@ export type SanityProduct = {
   _id: string;
   name: string;
   code: string;
+  slug?: string;
   unit?: string;
   weight?: string;
   price?: string;
@@ -380,83 +384,152 @@ function SearchBar({ placeholder, className, products, onSearch }: SearchBarProp
 type ProductCardProps = { product: SanityProduct; variant: "grid" | "list" };
 
 function ProductCard({ product, variant }: ProductCardProps) {
+  const { addToCart } = useCart();
+  const href = `/product/${product._id}`;
+
+  function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({
+      _id: product._id,
+      name: product.name,
+      code: product.code,
+      unit: product.unit,
+      weight: product.weight,
+      price: product.price,
+      image: product.image,
+    });
+  }
+
   if (variant === "list") {
     return (
-      <article className="shop-product-card shop-product-card--list">
-        <div className="shop-product-card__media shop-product-card__media--list">
-          <img alt={product.name} src={product.image ?? productImage} />
-        </div>
-        <div className="shop-product-card__content shop-product-card__content--list">
-          <div className="shop-product-card__head shop-product-card__head--list">
-            <div>
-              <h3>{product.name}</h3>
-              <p>Product code : {product.code}</p>
+      <Link href={href} className="shop-product-card-link">
+        <article className="shop-product-card shop-product-card--list">
+          <div className="shop-product-card__media shop-product-card__media--list">
+            <img alt={product.name} src={product.image ?? productImage} />
+          </div>
+          <div className="shop-product-card__content shop-product-card__content--list">
+            <div className="shop-product-card__head shop-product-card__head--list">
+              <div>
+                <h3>{product.name}</h3>
+                <p>Product code : {product.code}</p>
+              </div>
+              <span className="shop-product-card__badge">{product.badge}</span>
             </div>
-            <span className="shop-product-card__badge">{product.badge}</span>
+            <dl className="shop-product-card__meta shop-product-card__meta--list">
+              <div><dt>Unit</dt><dd>{product.unit}</dd></div>
+              <div><dt>Weight</dt><dd>{product.weight}</dd></div>
+            </dl>
+            <div className="shop-product-card__footer shop-product-card__footer--list">
+              <p>{product.price}</p>
+              <button type="button" onClick={handleAddToCart}>
+                <span>Add to Cart</span>
+                <img alt="" src={plusIcon} />
+              </button>
+            </div>
           </div>
-          <dl className="shop-product-card__meta shop-product-card__meta--list">
-            <div><dt>Unit</dt><dd>{product.unit}</dd></div>
-            <div><dt>Weight</dt><dd>{product.weight}</dd></div>
-          </dl>
-          <div className="shop-product-card__footer shop-product-card__footer--list">
-            <p>{product.price}</p>
-            <button type="button"><span>Add to Cart</span><img alt="" src={plusIcon} /></button>
-          </div>
-        </div>
-      </article>
+        </article>
+      </Link>
     );
   }
 
   return (
-    <article className="shop-product-card">
-      <div className="shop-product-card__media">
-        <img alt={product.name} src={product.image ?? productImage} />
-      </div>
-      <div className="shop-product-card__content">
-        <div className="shop-product-card__head">
-          <h3>{product.name}</h3>
-          <p>Product code : {product.code}</p>
+    <Link href={href} className="shop-product-card-link">
+      <article className="shop-product-card">
+        <div className="shop-product-card__media">
+          <img alt={product.name} src={product.image ?? productImage} />
         </div>
-        <dl className="shop-product-card__meta">
-          <div><dt>Unit</dt><dd>{product.unit}</dd></div>
-          <div><dt>Weight</dt><dd>{product.weight}</dd></div>
-        </dl>
-        <div className="shop-product-card__footer">
-          <p>{product.price}</p>
-          <button type="button"><span>Add to Cart</span><img alt="" src={plusIcon} /></button>
+        <div className="shop-product-card__content">
+          <div className="shop-product-card__head">
+            <h3>{product.name}</h3>
+            <p>Product code : {product.code}</p>
+          </div>
+          <dl className="shop-product-card__meta">
+            <div><dt>Unit</dt><dd>{product.unit}</dd></div>
+            <div><dt>Weight</dt><dd>{product.weight}</dd></div>
+          </dl>
+          <div className="shop-product-card__footer">
+            <p>{product.price}</p>
+            <button type="button" onClick={handleAddToCart}>
+              <span>Add to Cart</span>
+              <img alt="" src={plusIcon} />
+            </button>
+          </div>
         </div>
-      </div>
-    </article>
+      </article>
+    </Link>
   );
 }
 
-// ─── ListViewCartPanel ────────────────────────────────────────────────────────
+// ─── CartPanel (live) ─────────────────────────────────────────────────────────
 
-function ListViewCartPanel({ firstProduct }: { firstProduct?: SanityProduct }) {
-  if (!firstProduct) return null;
+function CartPanel() {
+  const { items, subtotal, updateQuantity, removeFromCart } = useCart();
+  const router = useRouter();
+
+  const formatINR = (n: number) =>
+    `₹ ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (items.length === 0) {
+    return (
+      <div className="shop-cart-panel__empty">
+        <img alt="" src={cartIcon} />
+        <p>Cart is empty — add items</p>
+      </div>
+    );
+  }
+
   return (
     <div className="shop-cart-panel__filled">
-      <div className="shop-cart-panel__item">
-        <div className="shop-cart-panel__item-media">
-          <img alt={firstProduct.name} src={firstProduct.image ?? productImage} />
-        </div>
-        <div className="shop-cart-panel__item-main">
-          <h3>{firstProduct.name}</h3>
-          <div className="shop-cart-panel__item-controls">
-            <div className="shop-cart-panel__quantity">
-              <button className="shop-cart-panel__quantity-button shop-cart-panel__quantity-button--minus" type="button"><img alt="" src={listQtyMinusIcon} /></button>
-              <span>3</span>
-              <button className="shop-cart-panel__quantity-button shop-cart-panel__quantity-button--plus" type="button"><img alt="" src={listQtyPlusIcon} /></button>
+      <div className="shop-cart-panel__items-list">
+        {items.map((item) => (
+          <div className="shop-cart-panel__item" key={item._id}>
+            <div className="shop-cart-panel__item-media">
+              <img alt={item.name} src={item.image ?? productImage} />
             </div>
-            <button className="shop-cart-panel__delete" type="button"><img alt="" src={cartDeleteIcon} /></button>
+            <div className="shop-cart-panel__item-main">
+              <h3>{item.name}</h3>
+              <div className="shop-cart-panel__item-controls">
+                <div className="shop-cart-panel__quantity">
+                  <button
+                    className="shop-cart-panel__quantity-button shop-cart-panel__quantity-button--minus"
+                    type="button"
+                    onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                  >
+                    <img alt="" src={listQtyMinusIcon} />
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button
+                    className="shop-cart-panel__quantity-button shop-cart-panel__quantity-button--plus"
+                    type="button"
+                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                  >
+                    <img alt="" src={listQtyPlusIcon} />
+                  </button>
+                </div>
+                <button
+                  className="shop-cart-panel__delete"
+                  type="button"
+                  onClick={() => removeFromCart(item._id)}
+                >
+                  <img alt="Remove" src={cartDeleteIcon} />
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
+
       <div className="shop-cart-panel__subtotal">
         <p>Subtotal</p>
-        <p>₹ 3,000</p>
+        <p>{formatINR(subtotal)}</p>
       </div>
-      <button className="shop-cart-panel__checkout" type="button">
+
+      <button
+        className="shop-cart-panel__checkout"
+        type="button"
+        onClick={() => router.push("/cart-page")}
+      >
         <span>Proceed to Checkout</span>
         <img alt="" src={cartProceedIcon} />
       </button>
@@ -513,10 +586,9 @@ export function ShopPageScreen({
   categories?: SanityCategory[];
   products?: SanityProduct[];
 }) {
+  const { totalItems } = useCart();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
-    categories.length > 0 ? categories[0]._id : null
-  );
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter state
@@ -610,10 +682,10 @@ export function ShopPageScreen({
         </div>
         <div className="shop-page__header-actions">
           <SearchBar placeholder="Search products…" products={products} onSearch={setSearchQuery} />
-          <button className="shop-cart-button" type="button">
+          <Link href="/cart-page" className="shop-cart-button">
             <img alt="" src={cartIcon} />
-            <span>2</span>
-          </button>
+            {totalItems > 0 && <span>{totalItems}</span>}
+          </Link>
         </div>
       </header>
 
@@ -623,16 +695,26 @@ export function ShopPageScreen({
       {/* ── Category chip row ── */}
       {categories.length > 0 && (
         <div className="shop-chip-row" role="tablist">
-          {categories.map((cat) => (
-            <button
-              key={cat._id}
-              className={activeCategoryId === cat._id ? "is-active" : ""}
-              onClick={() => setActiveCategoryId(cat._id)}
-              type="button"
-            >
-              {cat.name}
-            </button>
-          ))}
+          <button
+            className={activeCategoryId === null ? "is-active" : ""}
+            onClick={() => setActiveCategoryId(null)}
+            type="button"
+          >
+            All ({products.length})
+          </button>
+          {categories.map((cat) => {
+            const count = products.filter((p) => p.categoryId === cat._id).length;
+            return (
+              <button
+                key={cat._id}
+                className={activeCategoryId === cat._id ? "is-active" : ""}
+                onClick={() => setActiveCategoryId(cat._id)}
+                type="button"
+              >
+                {cat.name} ({count})
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -702,16 +784,26 @@ export function ShopPageScreen({
       <section className="shop-catalog">
         <aside className="shop-sidebar">
           <div className="shop-sidebar__inner">
-            {categories.map((cat) => (
-              <button
-                key={cat._id}
-                className={activeCategoryId === cat._id ? "is-active" : ""}
-                onClick={() => setActiveCategoryId(cat._id)}
-                type="button"
-              >
-                {cat.name}
-              </button>
-            ))}
+            <button
+              className={activeCategoryId === null ? "is-active" : ""}
+              onClick={() => setActiveCategoryId(null)}
+              type="button"
+            >
+              All ({products.length})
+            </button>
+            {categories.map((cat) => {
+              const count = products.filter((p) => p.categoryId === cat._id).length;
+              return (
+                <button
+                  key={cat._id}
+                  className={activeCategoryId === cat._id ? "is-active" : ""}
+                  onClick={() => setActiveCategoryId(cat._id)}
+                  type="button"
+                >
+                  {cat.name} ({count})
+                </button>
+              );
+            })}
           </div>
         </aside>
 
@@ -756,14 +848,7 @@ export function ShopPageScreen({
         <aside className="shop-cart-panel">
           <div className="shop-cart-panel__inner">
             <h2>Cart</h2>
-            {viewMode === "list" ? (
-              <ListViewCartPanel firstProduct={visibleProducts[0]} />
-            ) : (
-              <div className="shop-cart-panel__empty">
-                <img alt="" src={cartIcon} />
-                <p>Cart is empty add items</p>
-              </div>
-            )}
+            <CartPanel />
           </div>
         </aside>
       </section>

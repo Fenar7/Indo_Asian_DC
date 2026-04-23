@@ -1,92 +1,63 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 
-const brandLogo =
-  "https://www.figma.com/api/mcp/asset/6556e848-8f8a-4751-8aa9-b0776cdee66c";
-const cartIcon =
-  "https://www.figma.com/api/mcp/asset/ffa80aaa-5735-47b2-aacf-5d2a80644582";
-const whatsappIcon =
-  "https://www.figma.com/api/mcp/asset/72e185e0-bfa1-4053-8b9b-1fe5f455faef";
-const productImage =
-  "https://www.figma.com/api/mcp/asset/b4e669ac-5242-4553-b1a6-314f8dd7d601";
-const quantityPlus =
-  "https://www.figma.com/api/mcp/asset/11f4c6a0-fcfe-4846-9263-d597e2f37a7c";
-const quantityMinus =
-  "https://www.figma.com/api/mcp/asset/71f859cd-4279-4ead-a4a4-48c67bb15d2c";
-const deleteIcon =
-  "https://www.figma.com/api/mcp/asset/edd8c0bc-fa11-42cd-ba50-aa707254ae82";
-const searchIcon =
-  "https://www.figma.com/api/mcp/asset/4ead8ba7-d1ba-4713-bec7-659cd90fb0c5";
+import { useState } from "react";
+import { useCart } from "@/context/CartContext";
+import Link from "next/link";
 
-const cartItems = Array.from({ length: 2 }, (_, index) => ({
-  id: `cart-item-${index + 1}`,
-  name: "VIS BANANA ROAST 454G X12 @2.91",
-  unit: "₹ 300.00",
-  weight: "5 Boxes x 10 kg",
-  price: "₹ 300.00",
-  quantity: "3",
-  image: productImage,
-}));
+// ─── Assets ───────────────────────────────────────────────────────────────────
 
-type CartFieldProps = {
-  label: string;
-  placeholder: string;
-};
+const brandLogo   = "https://www.figma.com/api/mcp/asset/6556e848-8f8a-4751-8aa9-b0776cdee66c";
+const cartIcon    = "https://www.figma.com/api/mcp/asset/ffa80aaa-5735-47b2-aacf-5d2a80644582";
+const whatsappIcon= "https://www.figma.com/api/mcp/asset/72e185e0-bfa1-4053-8b9b-1fe5f455faef";
+const fallbackImg = "https://www.figma.com/api/mcp/asset/b4e669ac-5242-4553-b1a6-314f8dd7d601";
+const qtyPlus     = "https://www.figma.com/api/mcp/asset/11f4c6a0-fcfe-4846-9263-d597e2f37a7c";
+const qtyMinus    = "https://www.figma.com/api/mcp/asset/71f859cd-4279-4ead-a4a4-48c67bb15d2c";
+const deleteIcon  = "https://www.figma.com/api/mcp/asset/edd8c0bc-fa11-42cd-ba50-aa707254ae82";
+const searchIcon  = "https://www.figma.com/api/mcp/asset/4ead8ba7-d1ba-4713-bec7-659cd90fb0c5";
 
-function CartField({ label, placeholder }: CartFieldProps) {
-  return (
-    <div className="cart-field">
-      <label>{label}</label>
-      <input placeholder={placeholder} type="text" />
-    </div>
-  );
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatINR(n: number) {
+  return `₹ ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-type CartItemProps = {
-  item: (typeof cartItems)[number];
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type LineItem = {
+  _id: string; name: string; code: string;
+  unit?: string; weight?: string; price?: string; image?: string;
+  quantity: number;
 };
 
-function CartItem({ item }: CartItemProps) {
+// ─── CartItem ────────────────────────────────────────────────────────────────
+
+function CartItem({ item }: { item: LineItem }) {
+  const { updateQuantity, removeFromCart } = useCart();
   return (
     <article className="cart-line-item">
       <div className="cart-line-item__media">
-        <img alt={item.name} src={item.image} />
+        <img alt={item.name} src={item.image ?? fallbackImg} />
       </div>
-
       <div className="cart-line-item__content">
         <h3>{item.name}</h3>
-
         <dl className="cart-line-item__meta">
-          <div>
-            <dt>Unit</dt>
-            <dd>{item.unit}</dd>
-          </div>
-          <div>
-            <dt>Weight</dt>
-            <dd>{item.weight}</dd>
-          </div>
+          {item.unit   && <div><dt>Unit</dt><dd>{item.unit}</dd></div>}
+          {item.weight && <div><dt>Weight</dt><dd>{item.weight}</dd></div>}
         </dl>
-
-        <p className="cart-line-item__price">{item.price}</p>
+        {item.price && <p className="cart-line-item__price">{item.price}</p>}
       </div>
-
       <div className="cart-line-item__controls">
-        <button className="cart-line-item__delete" type="button">
-          <img alt="" src={deleteIcon} />
+        <button className="cart-line-item__delete" type="button" onClick={() => removeFromCart(item._id)}>
+          <img alt="Remove" src={deleteIcon} />
         </button>
-
         <div className="cart-line-item__quantity">
-          <button
-            className="cart-line-item__quantity-button cart-line-item__quantity-button--minus"
-            type="button"
-          >
-            <img alt="" src={quantityMinus} />
+          <button className="cart-line-item__quantity-button cart-line-item__quantity-button--minus" type="button" onClick={() => updateQuantity(item._id, item.quantity - 1)}>
+            <img alt="−" src={qtyMinus} />
           </button>
           <span>{item.quantity}</span>
-          <button
-            className="cart-line-item__quantity-button cart-line-item__quantity-button--plus"
-            type="button"
-          >
-            <img alt="" src={quantityPlus} />
+          <button className="cart-line-item__quantity-button cart-line-item__quantity-button--plus" type="button" onClick={() => updateQuantity(item._id, item.quantity + 1)}>
+            <img alt="+" src={qtyPlus} />
           </button>
         </div>
       </div>
@@ -94,111 +65,222 @@ function CartItem({ item }: CartItemProps) {
   );
 }
 
-export function CartPageScreen() {
+// ─── Success Modal ────────────────────────────────────────────────────────────
+
+function SuccessModal({ orderCode, onClose }: { orderCode: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    navigator.clipboard.writeText(orderCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
   return (
-    <section className="cart-page">
-      <header className="cart-page__header">
-        <div className="cart-page__brand">
-          <img alt="Indo Asian Foods logo" className="cart-page__logo" src={brandLogo} />
-          <p>INDO ASIAN FOODS LTD</p>
+    <div className="order-modal-overlay" onClick={onClose}>
+      <div className="order-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="order-modal__icon">
+          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="26" fill="#22c55e" />
+            <path d="M14 26.5l8 8 16-16" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
-
-        <div className="cart-page__header-actions">
-          <label className="cart-page__search">
-            <img alt="" src={searchIcon} />
-            <input placeholder="Search" type="text" />
-          </label>
-
-          <button className="cart-page__cart" type="button">
-            <img alt="" src={cartIcon} />
-            <span>2</span>
-          </button>
-        </div>
-      </header>
-
-      <section className="cart-page__body">
-        <div className="cart-form">
-          <h1>Checkout Details</h1>
-
-          <div className="cart-form__fields">
-            <div className="cart-form__row">
-              <CartField label="Name" placeholder="Enter your name" />
-            </div>
-
-            <div className="cart-form__row">
-              <CartField
-                label="Business Name"
-                placeholder="Enter your business name"
-              />
-            </div>
-          </div>
-
-          <div className="cart-form__section">
-            <h2>Shipping</h2>
-
-            <div className="cart-form__fields">
-              <div className="cart-form__row">
-                <CartField
-                  label="Address Line 1"
-                  placeholder="Enter the address here"
-                />
-              </div>
-
-              <div className="cart-form__row cart-form__row--double">
-                <CartField
-                  label="Address Line 2 Optional"
-                  placeholder="Enter the address here"
-                />
-                <CartField label="Zip Code" placeholder="Enter the zip code" />
-              </div>
-
-              <div className="cart-form__row">
-                <CartField
-                  label="Additional Instructions"
-                  placeholder="If there are anything to note please entere it here"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="cart-side">
-          <section className="cart-card cart-summary">
-            <h2>Order Summary</h2>
-
-            <div className="cart-summary__rows">
-              <div>
-                <p>Subtotal</p>
-                <p>₹ 300.00</p>
-              </div>
-              <div>
-                <p>Shipping</p>
-                <p>FREE</p>
-              </div>
-            </div>
-
-            <div className="cart-summary__total">
-              <p>Total</p>
-              <p>₹ 300.00</p>
-            </div>
-
-            <button className="cart-summary__cta" type="button">
-              <span>Place Order on Whatsapp</span>
-              <img alt="" src={whatsappIcon} />
+        <h2>Order Placed Successfully!</h2>
+        <p className="order-modal__subtitle">
+          We've received your order and will contact you shortly on WhatsApp.
+        </p>
+        <div className="order-modal__code-block">
+          <span className="order-modal__code-label">Order Code</span>
+          <div className="order-modal__code-row">
+            <span className="order-modal__code">{orderCode}</span>
+            <button className={`order-modal__copy-btn ${copied ? "is-copied" : ""}`} type="button" onClick={handleCopy}>
+              {copied ? "✓ Copied!" : "Copy"}
             </button>
-          </section>
+          </div>
+        </div>
+        <p className="order-modal__note">Save your order code for reference. You'll hear from us soon.</p>
+        <Link href="/" className="order-modal__cta" onClick={onClose}>Continue Shopping</Link>
+      </div>
+    </div>
+  );
+}
 
-          <section className="cart-card cart-items">
-            <h2>Cart</h2>
+// ─── CartField ────────────────────────────────────────────────────────────────
 
-            <div className="cart-items__list">
-              {cartItems.map((item) => (
-                <CartItem item={item} key={item.id} />
-              ))}
+function CartField({
+  label, placeholder, value, onChange, required, error,
+}: {
+  label: string; placeholder: string; value: string;
+  onChange: (v: string) => void; required?: boolean; error?: string;
+}) {
+  return (
+    <div className={`cart-field ${error ? "has-error" : ""}`}>
+      <label>
+        {label}
+        {required && <span className="cart-field__required"> *</span>}
+      </label>
+      <input placeholder={placeholder} required={required} type="text" value={value} onChange={(e) => onChange(e.target.value)} />
+      {error && <span className="cart-field__error">{error}</span>}
+    </div>
+  );
+}
+
+// ─── CartPageScreen ───────────────────────────────────────────────────────────
+
+export function CartPageScreen() {
+  const { items, subtotal, totalItems, clearCart } = useCart();
+
+  // Form state
+  const [name,         setName]         = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [address1,     setAddress1]     = useState("");
+  const [address2,     setAddress2]     = useState("");
+  const [zip,          setZip]          = useState("");
+  const [notes,        setNotes]        = useState("");
+
+  // UI state
+  const [errors,    setErrors]    = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [orderCode, setOrderCode] = useState<string | null>(null);
+
+  function validate() {
+    const e: Record<string, string> = {};
+    if (!name.trim())         e.name         = "Name is required";
+    if (!businessName.trim()) e.businessName = "Business name is required";
+    if (!address1.trim())     e.address1     = "Address is required";
+    if (!zip.trim())          e.zip          = "Zip code is required";
+    return e;
+  }
+
+  async function handlePlaceOrder() {
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      document.querySelector(".has-error")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setErrors({});
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/place-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { name, businessName, address1, address2, zip, notes },
+          items: items.map((i) => ({ name: i.name, code: i.code, quantity: i.quantity, price: i.price })),
+          total: subtotal,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) { alert(data.error ?? "Something went wrong. Please try again."); return; }
+
+      setOrderCode(data.orderCode);
+      clearCart();
+    } catch {
+      alert("Network error. Please check your connection and try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <>
+      {orderCode && <SuccessModal orderCode={orderCode} onClose={() => setOrderCode(null)} />}
+
+      <section className="cart-page">
+        {/* Header */}
+        <header className="cart-page__header">
+          <Link href="/" className="cart-page__brand">
+            <img alt="Indo Asian Foods logo" className="cart-page__logo" src={brandLogo} />
+            <p>INDO ASIAN FOODS LTD</p>
+          </Link>
+          <div className="cart-page__header-actions">
+            <label className="cart-page__search">
+              <img alt="" src={searchIcon} />
+              <input placeholder="Search" type="text" />
+            </label>
+            <Link href="/" className="cart-page__cart">
+              <img alt="" src={cartIcon} />
+              {totalItems > 0 && <span>{totalItems}</span>}
+            </Link>
+          </div>
+        </header>
+
+        {/* Empty state */}
+        {items.length === 0 && !orderCode && (
+          <div className="cart-page__empty">
+            <img alt="" src={cartIcon} />
+            <p>Your cart is empty.</p>
+            <Link href="/" className="cart-page__empty-cta">Continue Shopping</Link>
+          </div>
+        )}
+
+        {/* Body */}
+        {items.length > 0 && (
+          <section className="cart-page__body">
+            {/* Checkout form */}
+            <div className="cart-form">
+              <h1>Checkout Details</h1>
+              <div className="cart-form__fields">
+                <div className="cart-form__row">
+                  <CartField label="Name" placeholder="Enter your name" required value={name} onChange={setName} error={errors.name} />
+                </div>
+                <div className="cart-form__row">
+                  <CartField label="Business Name" placeholder="Enter your business name" required value={businessName} onChange={setBusinessName} error={errors.businessName} />
+                </div>
+              </div>
+              <div className="cart-form__section">
+                <h2>Shipping</h2>
+                <div className="cart-form__fields">
+                  <div className="cart-form__row">
+                    <CartField label="Address Line 1" placeholder="Enter the address here" required value={address1} onChange={setAddress1} error={errors.address1} />
+                  </div>
+                  <div className="cart-form__row cart-form__row--double">
+                    <CartField label="Address Line 2 Optional" placeholder="Enter the address here" value={address2} onChange={setAddress2} />
+                    <CartField label="Zip Code" placeholder="Enter the zip code" required value={zip} onChange={setZip} error={errors.zip} />
+                  </div>
+                  <div className="cart-form__row">
+                    <CartField label="Additional Instructions" placeholder="If there are anything to note please enter it here" value={notes} onChange={setNotes} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right sidebar */}
+            <div className="cart-side">
+              <section className="cart-card cart-summary">
+                <h2>Order Summary</h2>
+                <div className="cart-summary__rows">
+                  <div><p>Subtotal</p><p>{formatINR(subtotal)}</p></div>
+                  <div><p>Shipping</p><p>FREE</p></div>
+                </div>
+                <div className="cart-summary__total">
+                  <p>Total</p>
+                  <p>{formatINR(subtotal)}</p>
+                </div>
+                <button
+                  className={`cart-summary__cta ${isLoading ? "is-loading" : ""}`}
+                  type="button"
+                  disabled={isLoading}
+                  onClick={handlePlaceOrder}
+                >
+                  {isLoading ? <span>Placing Order…</span> : (
+                    <><span>Place Order on Whatsapp</span><img alt="" src={whatsappIcon} /></>
+                  )}
+                </button>
+              </section>
+
+              <section className="cart-card cart-items">
+                <h2>Cart</h2>
+                <div className="cart-items__list">
+                  {items.map((item) => <CartItem item={item} key={item._id} />)}
+                </div>
+              </section>
             </div>
           </section>
-        </div>
+        )}
       </section>
-    </section>
+    </>
   );
 }

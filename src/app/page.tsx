@@ -28,6 +28,7 @@ export default async function Home() {
   const productsQuery = `*[_type == "product"] | order(_createdAt asc) {
     _id,
     name,
+    "slug": slug.current,
     code,
     unit,
     weight,

@@ -126,7 +126,9 @@
   gap: 18px;
   padding: 32px 0 39px;
 
-  button {
+  a {
+    display: inline-flex;
+    align-items: center;
     height: 46px;
     border: 1px solid $stroke-grey;
     border-radius: 999px;
@@ -136,7 +138,20 @@
     font-family: $font-sf-pro;
     font-size: 19px;
     font-weight: 400;
+    text-decoration: none;
     cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+
+    &.is-current {
+      border-color: $main-cta-red;
+      color: $main-cta-red;
+      pointer-events: none;
+    }
+
+    &:hover:not(.is-current) {
+      border-color: rgba($pure-black, 0.3);
+      color: $pure-black;
+    }
   }
 }
 
@@ -191,6 +206,12 @@
   padding: 0;
   overflow: hidden;
   cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &.is-active {
+    border-color: $main-cta-red;
+    border-width: 2px;
+  }
 
   img {
     width: 45px;
@@ -397,6 +418,19 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 29px;
+}
+
+.related-product-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover .related-product-card {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-color: rgba($main-cta-red, 0.25);
+    transform: translateY(-2px);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
 }
 
 .related-product-card {
@@ -656,7 +690,7 @@
     }
   }
 
-  .product-detail__breadcrumbs button {
+  .product-detail__breadcrumbs a {
     height: 40px;
     padding-inline: 18px;
     font-size: 15px;
