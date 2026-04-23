@@ -280,6 +280,25 @@ export function CartPageScreen() {
             </div>
           </section>
         )}
+        {/* Mobile fixed checkout bar — hidden on desktop */}
+        {items.length > 0 && (
+          <div className="cart-mobile-bar">
+            <div className="cart-mobile-bar__total">
+              <span className="cart-mobile-bar__label">Total</span>
+              <span className="cart-mobile-bar__amount">{formatINR(subtotal)}</span>
+            </div>
+            <button
+              className={`cart-mobile-bar__cta ${isLoading ? "is-loading" : ""}`}
+              type="button"
+              disabled={isLoading}
+              onClick={handlePlaceOrder}
+            >
+              {isLoading ? <span>Placing…</span> : (
+                <><span>Place Order</span><img alt="" src={whatsappIcon} /></>
+              )}
+            </button>
+          </div>
+        )}
       </section>
     </>
   );

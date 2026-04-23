@@ -1632,23 +1632,25 @@
     top: 114px;          // inherit sticky from chip-row
     z-index: 190;
     background: $pure-white;
-    // Fade + arrow indicator on right edge
+    // Scroll hint arrow — matches design stroke style
     &::after {
-      content: '\203A'; // ›
+      content: '\203A';
       position: absolute;
-      right: 10px;
+      right: 8px;
       top: 50%;
       transform: translateY(-50%);
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.55);  // solid, clearly visible
-      display: inline-flex;
+      background: #ffffff;
+      border: 1px solid #dedede;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 17px;
       line-height: 1;
-      color: #ffffff;                   // white arrow
+      color: #555555;
       pointer-events: none;
     }
   }
@@ -1674,23 +1676,25 @@
     position: relative;    // anchor for ::after
     margin: 8px 16px;
 
-    // Arrow-in-circle at right edge indicating scroll
+    // Scroll hint arrow — matches design stroke style
     &::after {
-      content: '\203A'; // ›
+      content: '\203A';
       position: absolute;
       right: 8px;
       top: 50%;
       transform: translateY(-50%);
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.55);  // solid, clearly visible
-      display: inline-flex;
+      background: #ffffff;
+      border: 1px solid #dedede;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 19px;
+      font-size: 17px;
       line-height: 1;
-      color: #ffffff;                   // white arrow
+      color: #555555;
       pointer-events: none;
       z-index: 2;
     }
