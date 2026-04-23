@@ -694,91 +694,95 @@ export function ShopPageScreen({
 
       {/* ── Category chip row ── */}
       {categories.length > 0 && (
-        <div className="shop-chip-row" role="tablist">
-          <button
-            className={activeCategoryId === null ? "is-active" : ""}
-            onClick={() => setActiveCategoryId(null)}
-            type="button"
-          >
-            All ({products.length})
-          </button>
-          {categories.map((cat) => {
-            const count = products.filter((p) => p.categoryId === cat._id).length;
-            return (
-              <button
-                key={cat._id}
-                className={activeCategoryId === cat._id ? "is-active" : ""}
-                onClick={() => setActiveCategoryId(cat._id)}
-                type="button"
-              >
-                {cat.name} ({count})
-              </button>
-            );
-          })}
+        <div className="shop-chip-row-outer">
+          <div className="shop-chip-row" role="tablist">
+            <button
+              className={activeCategoryId === null ? "is-active" : ""}
+              onClick={() => setActiveCategoryId(null)}
+              type="button"
+            >
+              All ({products.length})
+            </button>
+            {categories.map((cat) => {
+              const count = products.filter((p) => p.categoryId === cat._id).length;
+              return (
+                <button
+                  key={cat._id}
+                  className={activeCategoryId === cat._id ? "is-active" : ""}
+                  onClick={() => setActiveCategoryId(cat._id)}
+                  type="button"
+                >
+                  {cat.name} ({count})
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* ── Filter bar ── */}
-      <section className="shop-filter-bar">
-        <div className="shop-filter-bar__left">
-          <button
-            className={`shop-filter-bar__filters ${totalActiveFilters > 0 ? "is-active" : ""}`}
-            type="button"
-            onClick={totalActiveFilters > 0 ? clearAllFilters : undefined}
-          >
-            <img alt="" src={filterIcon} />
-            <span>
-              {totalActiveFilters > 0
-                ? `Filters (${totalActiveFilters}) — Clear`
-                : "Filters"}
-            </span>
-          </button>
+      <div className="shop-filter-bar-outer">
+        <section className="shop-filter-bar">
+          <div className="shop-filter-bar__left">
+            <button
+              className={`shop-filter-bar__filters ${totalActiveFilters > 0 ? "is-active" : ""}`}
+              type="button"
+              onClick={totalActiveFilters > 0 ? clearAllFilters : undefined}
+            >
+              <img alt="" src={filterIcon} />
+              <span>
+                {totalActiveFilters > 0
+                  ? `Filters (${totalActiveFilters}) — Clear`
+                  : "Filters"}
+              </span>
+            </button>
 
-          <div className="shop-filter-bar__pill-group">
-            <FilterPill
-              label="Weight"
-              options={weightOptions}
-              selected={weightFilter}
-              onToggle={(v) => toggleSetFilter(setWeightFilter, v)}
-              onClear={() => setWeightFilter(new Set())}
-            />
-            <FilterPill
-              label="Tag"
-              options={tagOptions}
-              selected={tagFilter}
-              onToggle={(v) => toggleSetFilter(setTagFilter, v)}
-              onClear={() => setTagFilter(new Set())}
-            />
-            <FilterPill
-              label="Unit"
-              options={unitOptions}
-              selected={unitFilter}
-              onToggle={(v) => toggleSetFilter(setUnitFilter, v)}
-              onClear={() => setUnitFilter(new Set())}
-            />
-            <PriceFilterPill
-              minPrice={globalMinPrice}
-              maxPrice={globalMaxPrice}
-              priceMin={priceMin}
-              priceMax={priceMax}
-              onPriceMin={setPriceMin}
-              onPriceMax={setPriceMax}
-              onClear={() => { setPriceMin(""); setPriceMax(""); }}
-            />
+            <div className="shop-filter-bar__pill-group">
+              <FilterPill
+                label="Weight"
+                options={weightOptions}
+                selected={weightFilter}
+                onToggle={(v) => toggleSetFilter(setWeightFilter, v)}
+                onClear={() => setWeightFilter(new Set())}
+              />
+              <FilterPill
+                label="Tag"
+                options={tagOptions}
+                selected={tagFilter}
+                onToggle={(v) => toggleSetFilter(setTagFilter, v)}
+                onClear={() => setTagFilter(new Set())}
+              />
+              <FilterPill
+                label="Unit"
+                options={unitOptions}
+                selected={unitFilter}
+                onToggle={(v) => toggleSetFilter(setUnitFilter, v)}
+                onClear={() => setUnitFilter(new Set())}
+              />
+              <PriceFilterPill
+                minPrice={globalMinPrice}
+                maxPrice={globalMaxPrice}
+                priceMin={priceMin}
+                priceMax={priceMax}
+                onPriceMin={setPriceMin}
+                onPriceMax={setPriceMax}
+                onClear={() => { setPriceMin(""); setPriceMax(""); }}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="shop-filter-bar__right">
-          <button
-            className="shop-filter-bar__view"
-            onClick={() => setViewMode((c) => (c === "grid" ? "list" : "grid"))}
-            type="button"
-          >
-            <span>{viewMode === "grid" ? "List View" : "Grid View"}</span>
-            <img alt="" src={viewMode === "grid" ? listIcon : gridIcon} />
-          </button>
-        </div>
-      </section>
+          <div className="shop-filter-bar__right">
+            <button
+              className="shop-filter-bar__view"
+              onClick={() => setViewMode((c) => (c === "grid" ? "list" : "grid"))}
+              type="button"
+            >
+              <span>{viewMode === "grid" ? "List View" : "Grid View"}</span>
+              <img alt="" src={viewMode === "grid" ? listIcon : gridIcon} />
+            </button>
+          </div>
+        </section>
+      </div>
 
       {/* ── Catalog ── */}
       <section className="shop-catalog">

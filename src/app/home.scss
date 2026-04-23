@@ -352,6 +352,15 @@
   }
 }
 
+// On desktop: outer wrappers are layout-transparent
+.shop-chip-row-outer {
+  display: contents; // invisible box — children behave as direct children of parent
+}
+
+.shop-filter-bar-outer {
+  display: contents; // invisible box on desktop
+}
+
 .shop-chip-row {
   position: sticky;
   top: 101px;           /* stick just below the header */
@@ -1553,185 +1562,400 @@
   }
 }
 
+
+// ─── Mobile ≤ 768px ──────────────────────────────────────────────────────────
+
 @media (max-width: 768px) {
+
+  // ── Page shell ──
   .shop-page {
-    padding-inline: 16px;
-    padding-bottom: 36px;
+    padding-inline: 0;
+    padding-bottom: 48px;
+  }
+
+  // ── Header: brand row + search row ──
+  .shop-page__header {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: auto;
+    padding: 12px 16px;
+    gap: 10px;
+    // inherits position:sticky; top:0; z-index:200; background from base
   }
 
   .shop-brand {
-    gap: 14px;
+    gap: 12px;
 
     p {
-      font-size: 20px;
+      font-size: 19px;
       line-height: 1.15;
     }
   }
 
   .shop-brand__logo {
-    width: 46px;
-    height: 47px;
+    width: 38px;
+    height: 38px;
   }
 
+  // actions row: search stretches left, cart icon right
   .shop-page__header-actions {
-    gap: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+  }
+
+  .shop-search-wrapper {
+    flex: 1;
+    width: auto !important;
   }
 
   .shop-search {
-    height: 50px;
-    padding-inline: 16px;
+    height: 42px;
+    padding-inline: 14px;
+    width: 100%;
 
-    input {
-      font-size: 16px;
+    input { font-size: 16px; }
+  }
+
+  // ── Hero ──
+  .shop-hero {
+    height: 190px;
+    border-radius: 14px;
+    margin: 10px 16px 0;
+  }
+
+  // ── Chip row outer: carries sticky + provides anchor for the arrow hint ──
+  .shop-chip-row-outer {
+    display: block;      // override desktop display:contents — needed for ::after
+    position: sticky;
+    top: 114px;          // inherit sticky from chip-row
+    z-index: 190;
+    background: $pure-white;
+    // Fade + arrow indicator on right edge
+    &::after {
+      content: '\203A'; // ›
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.55);  // solid, clearly visible
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+      color: #ffffff;                   // white arrow
+      pointer-events: none;
     }
   }
 
-  .shop-hero {
-    height: 280px;
-    border-radius: 18px;
-  }
-
+  // ── Chip row: no longer carries sticky (outer does it) ──
   .shop-chip-row {
-    gap: 12px;
-    padding-top: 18px;
+    position: static;
+    top: auto;
+    z-index: auto;
+    padding: 12px 16px 10px;
+    gap: 10px;
   }
 
   .shop-chip-row button {
-    height: 38px;
-    padding-inline: 18px;
-    font-size: 15px;
+    height: 34px;
+    padding-inline: 16px;
+    font-size: 14px;
   }
 
+  // ── Filter bar outer wrapper: holds scroll arrow hint ──
+  .shop-filter-bar-outer {
+    display: block;        // override desktop display:contents — needed for ::after
+    position: relative;    // anchor for ::after
+    margin: 8px 16px;
+
+    // Arrow-in-circle at right edge indicating scroll
+    &::after {
+      content: '\203A'; // ›
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.55);  // solid, clearly visible
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      line-height: 1;
+      color: #ffffff;                   // white arrow
+      pointer-events: none;
+      z-index: 2;
+    }
+  }
+
+  // ── Filter bar: NOT sticky on mobile, horizontal scrollable ──
   .shop-filter-bar {
-    gap: 14px;
-    padding: 12px;
+    position: static;
+    top: auto;
+    z-index: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-height: auto;
+    gap: 10px;
+    margin: 0;            // outer handles margin
+    padding: 9px 36px 9px 14px;  // right pad leaves room for arrow
+    border-radius: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
   }
 
   .shop-filter-bar__left {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .shop-filter-bar__filters {
+    font-size: 15px;
+    white-space: nowrap;
+    padding: 4px 8px;
+    gap: 8px;
+
+    // Smaller icon on mobile
+    img {
+      width: 16px !important;
+      height: 16px !important;
+    }
   }
 
   .shop-filter-bar__pill-group {
+    gap: 8px;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+
+  .shop-filter-bar__right {
+    margin-left: auto;
+    flex-shrink: 0;
+    justify-content: flex-end;
+  }
+
+  .shop-filter-bar__view {
+    height: 34px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  // ── Catalog: single column, sidebar + cart panel hidden ──
+  .shop-catalog {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-inline: 16px;
+  }
+
+  // Sidebar hidden on mobile (chip row covers categories)
+  .shop-sidebar {
+    display: none;
+  }
+
+  // Cart panel hidden on mobile (use cart icon → cart page)
+  .shop-cart-panel {
+    display: none !important;
+  }
+
+  // ── Results top section ──
+  .shop-results__top {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px 0 8px;
     gap: 10px;
+  }
+
+  // Hide duplicate search (already in header)
+  .shop-results__search {
+    display: none;
   }
 
   .shop-results__heading {
     h2 {
-      font-size: 24px;
+      font-size: 21px;
+      line-height: 1.1;
     }
 
     p {
-      font-size: 16px;
+      font-size: 14px;
+      margin-top: 5px;
     }
   }
 
+  // ── Product grid: 2 columns ──
   .shop-results__grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px;
   }
 
   .shop-results__grid--list {
-    gap: 16px;
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
+  // ── Product card: compact ──
   .shop-product-card {
     min-height: auto;
+    border-radius: 14px;
   }
 
   .shop-product-card__media {
-    width: calc(100% - 28px);
-    height: 240px;
-    margin-top: 14px;
+    width: calc(100% - 20px);
+    height: 150px;
+    margin-top: 10px;
+    border-radius: 8px;
   }
 
   .shop-product-card__content {
-    padding: 20px 14px 16px;
+    padding: 12px 12px 14px;
+  }
+
+  .shop-product-card__head {
+    min-height: auto;
+
+    h3 {
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    p {
+      font-size: 13px;
+      margin-top: 4px;
+    }
   }
 
   .shop-product-card__meta {
+    gap: 8px;
+    margin-top: 10px;
+
     div {
-      grid-template-columns: 58px 1fr;
-      gap: 12px;
+      grid-template-columns: 52px 1fr;
+      gap: 8px;
     }
 
-    dt,
-    dd {
-      font-size: 17px;
+    dt, dd {
+      font-size: 14px;
     }
   }
 
   .shop-product-card__footer {
     flex-direction: column;
     align-items: stretch;
+    margin-top: 14px;
+    gap: 10px;
+
+    p {
+      font-size: 17px;
+    }
 
     button {
       width: 100%;
+      min-width: auto;
+      height: 36px;
+      font-size: 14px;
+      gap: 8px;
     }
   }
 
+  // ── List view card ──
   .shop-product-card--list {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 14px;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 14px;
+    min-height: auto;
+    padding: 16px;
   }
 
   .shop-product-card__media--list {
-    width: 100%;
-    height: 220px;
+    width: 120px;
+    height: 126px;
+    margin: 0;
+  }
+
+  .shop-product-card__content--list {
+    padding: 0;
   }
 
   .shop-product-card__head--list {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 8px;
+    min-height: auto;
+
+    h3 { font-size: 15px; }
+    p  { font-size: 13px; }
   }
 
   .shop-product-card__meta--list {
-    div {
-      grid-template-columns: 58px 1fr;
-      gap: 12px;
-    }
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 10px;
 
-    dt,
-    dd {
-      font-size: 17px;
-    }
+    div { grid-template-columns: 52px 1fr; gap: 8px; }
+    dt, dd { font-size: 15px; }
   }
 
   .shop-product-card__footer--list {
-    flex-direction: column;
-    align-items: stretch;
-  }
+    margin-top: 12px;
+    padding-top: 10px;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 
-  .shop-cart-panel__empty {
-    gap: 18px;
-    padding-top: 28px;
-
-    p {
-      font-size: 16px;
+    button {
+      width: auto;
+      flex: 0 0 auto;
     }
   }
 
-  .shop-cart-panel__item {
-    grid-template-columns: 72px minmax(0, 1fr);
-  }
-
-  .shop-cart-panel__item-media {
-    width: 72px;
-    height: 74px;
-  }
-
-  .shop-cart-panel__item-main h3 {
-    max-width: none;
-    font-size: 16px;
-  }
-
-  .shop-cart-panel__item-controls {
-    flex-wrap: wrap;
-  }
-
-  .shop-cart-panel__subtotal {
-    margin-top: 28px;
+  // ── Empty state ──
+  .shop-results__empty-reset {
+    height: 36px;
+    font-size: 14px;
   }
 }
+
+// ─── Very small mobile ≤ 420px: single product column ────────────────────────
+
+@media (max-width: 420px) {
+  .shop-results__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .shop-product-card__media {
+    height: 220px;
+  }
+
+  .shop-page__header {
+    padding: 10px 14px;
+  }
+
+  .shop-chip-row {
+    padding-inline: 14px;
+    top: 110px;
+  }
+
+  .shop-filter-bar {
+    margin-inline: 14px;
+  }
+
+  .shop-catalog {
+    padding-inline: 14px;
+  }
+}
+
