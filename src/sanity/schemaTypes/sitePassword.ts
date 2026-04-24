@@ -5,6 +5,7 @@ export const sitePasswordType = defineType({
   title: "Site Login Password",
   type: "document",
   // Limit to a single document
+  // @ts-expect-error - Sanity v3 doesn't include this in types but it still works
   __experimental_actions: ["update", "publish"],
   fields: [
     defineField({
