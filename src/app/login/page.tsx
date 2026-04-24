@@ -42,8 +42,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-page-container-main flex min-h-screen items-center justify-center bg-pure-white">
-      <div className="login-page-container container">
+    <div className="login-page-container-main flex min-h-[100dvh] w-full items-center justify-center bg-pure-white px-4">
+      <div className="login-page-container w-full">
         <section className="login-card">
           <div className="login-card__brand">
             <div className="login-card__logo" aria-hidden="true">

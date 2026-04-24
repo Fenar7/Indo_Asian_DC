@@ -158,12 +158,9 @@
 
 
 @media (max-width: 640px) {
-  .login-page-container-main {
-    padding: 24px 16px;
-  }
-
   .login-card {
     width: 100%;
+    margin: auto; // Ensures flex container honors center weighting
     border-radius: 18px;
     padding: 22px 20px 24px;
   }
