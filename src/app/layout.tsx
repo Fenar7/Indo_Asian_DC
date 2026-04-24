@@ -3,8 +3,12 @@ import "./globals.scss";
 import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
-  title: "Indo Asian DC",
-  description: "Frontend foundation for the Indo Asian DC web app.",
+  title: "Indo Asian Foods Ltd | Premium Groceries & Spices",
+  description: "Discover premium groceries, authentic spices, and daily essentials at Indo Asian Foods. Explore our fresh selections, festival offers, and high-quality products.",
+  icons: {
+    icon: "/icons/indo-asian-logo-main.png?v=2", // Forces explicit favicon path and busts cache
+    apple: "/icons/indo-asian-logo-main.png?v=2",
+  },
 };
 
 export default function RootLayout({
