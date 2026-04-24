@@ -4,22 +4,14 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const brandLogo =
-  "https://www.figma.com/api/mcp/asset/6fb267ce-e6cf-4ff7-a197-80343b35d983";
-const cartIcon =
-  "https://www.figma.com/api/mcp/asset/dae3ce05-7ea1-4737-95da-8395c5063175";
-const quantityPlus =
-  "https://www.figma.com/api/mcp/asset/b80116fd-1ab6-482d-bff2-5c2a48776e31";
-const quantityMinus =
-  "https://www.figma.com/api/mcp/asset/e4c60a0d-da94-4cb6-a440-c36589cfa7ce";
-const addToCartPlus =
-  "https://www.figma.com/api/mcp/asset/f40dc0ee-d1bd-4938-918a-5c834423a53a";
-const cardPlus =
-  "https://www.figma.com/api/mcp/asset/4a72c3da-95a0-4b25-b754-9fed8adc2ac2";
-const searchIcon =
-  "https://www.figma.com/api/mcp/asset/319353d3-96c9-4c5d-bc4e-36081cb368e6";
-const fallbackImage =
-  "https://www.figma.com/api/mcp/asset/0eb03f38-5aeb-4c39-aaa5-4f1a9f5c3007";
+const brandLogo = "/icons/indo-asian-logo-main.png";
+const cartIcon = "/icons/shopping-card-icon.png";
+const quantityPlus = "/icons/plus-red-icon.png";
+const quantityMinus = "/icons/minus-icon.png";
+const addToCartPlus = "/icons/plus-red-icon.png";
+const cardPlus = "/icons/plus-red-icon.png";
+const searchIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E";
+const fallbackImage = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -7,14 +7,14 @@ import Link from "next/link";
 
 // ─── Assets ───────────────────────────────────────────────────────────────────
 
-const brandLogo   = "https://www.figma.com/api/mcp/asset/6556e848-8f8a-4751-8aa9-b0776cdee66c";
-const cartIcon    = "https://www.figma.com/api/mcp/asset/ffa80aaa-5735-47b2-aacf-5d2a80644582";
-const whatsappIcon= "https://www.figma.com/api/mcp/asset/72e185e0-bfa1-4053-8b9b-1fe5f455faef";
-const fallbackImg = "https://www.figma.com/api/mcp/asset/b4e669ac-5242-4553-b1a6-314f8dd7d601";
-const qtyPlus     = "https://www.figma.com/api/mcp/asset/11f4c6a0-fcfe-4846-9263-d597e2f37a7c";
-const qtyMinus    = "https://www.figma.com/api/mcp/asset/71f859cd-4279-4ead-a4a4-48c67bb15d2c";
-const deleteIcon  = "https://www.figma.com/api/mcp/asset/edd8c0bc-fa11-42cd-ba50-aa707254ae82";
-const searchIcon  = "https://www.figma.com/api/mcp/asset/4ead8ba7-d1ba-4713-bec7-659cd90fb0c5";
+const brandLogo   = "/icons/indo-asian-logo-main.png";
+const cartIcon    = "/icons/shopping-card-icon.png";
+const whatsappIcon= "/icons/whatsapp icon.png";
+const fallbackImg = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
+const qtyPlus     = "/icons/plus-red-icon.png";
+const qtyMinus    = "/icons/minus-icon.png";
+const deleteIcon  = "/icons/dustbin-icon.png";
+const searchIcon  = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

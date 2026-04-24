@@ -6,34 +6,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
-const brandLogo =
-  "https://www.figma.com/api/mcp/asset/06feb199-6ba2-4db7-8434-7cd5b19f61a2";
-const cartIcon =
-  "https://www.figma.com/api/mcp/asset/5293c9cd-1366-44ed-9a90-9d8fc9325776";
-const heroBanner =
-  "https://www.figma.com/api/mcp/asset/66f7382c-24b5-4336-bcf5-4c89123ff4e6";
-const filterIcon =
-  "https://www.figma.com/api/mcp/asset/3e0a7578-f637-4127-8735-cad9944371df";
-const dropdownIcon =
-  "https://www.figma.com/api/mcp/asset/0b24b3cc-3845-4cb3-8c9f-8dff440e74cb";
-const gridIcon =
-  "https://www.figma.com/api/mcp/asset/8778b26d-722a-421f-a5e2-613b7773bca2";
-const productImage =
-  "https://www.figma.com/api/mcp/asset/36471bab-745f-4eae-9a8f-dff5e638c37e";
-const plusIcon =
-  "https://www.figma.com/api/mcp/asset/9f985b03-583d-4b6d-8965-15732b1e4fa8";
-const searchIcon =
-  "https://www.figma.com/api/mcp/asset/a7ddc988-ee61-49ef-b340-91d6de1d0b28";
-const listIcon =
-  "https://www.figma.com/api/mcp/asset/9d52f61c-badd-4822-8054-07af96dda371";
-const cartDeleteIcon =
-  "https://www.figma.com/api/mcp/asset/e5d99527-a5e1-4923-aafc-a3dca86aaa2e";
-const cartProceedIcon =
-  "https://www.figma.com/api/mcp/asset/0ca99080-d67c-46c0-a4ba-f9d94cf514da";
-const listQtyPlusIcon =
-  "https://www.figma.com/api/mcp/asset/6d718f72-64a5-42b8-8f1e-889eec91d532";
-const listQtyMinusIcon =
-  "https://www.figma.com/api/mcp/asset/8e87b2a3-6e22-459b-9124-1bd11d83889a";
+const brandLogo = "/icons/indo-asian-logo-main.png";
+const cartIcon = "/icons/shopping-card-icon.png";
+const heroBanner = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
+const filterIcon = "/icons/filter-icon.png";
+const dropdownIcon = "/icons/down-arrow-icon.png";
+const gridIcon = "/icons/grid-view-icon.png";
+const productImage = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
+const plusIcon = "/icons/plus-red-icon.png";
+const searchIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E";
+const listIcon = "/icons/list-view-icon.png";
+const cartDeleteIcon = "/icons/dustbin-icon.png";
+const cartProceedIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E";
+const listQtyPlusIcon = "/icons/plus-red-icon.png";
+const listQtyMinusIcon = "/icons/minus-icon.png";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
