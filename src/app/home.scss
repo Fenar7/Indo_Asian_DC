@@ -1670,17 +1670,17 @@
     font-size: 14px;
   }
 
-  // ── Filter bar outer wrapper: holds scroll arrow hint ──
+  // ── Filter bar outer wrapper: full width, holds scroll arrow hint ──
   .shop-filter-bar-outer {
-    display: block;        // override desktop display:contents — needed for ::after
-    position: relative;    // anchor for ::after
-    margin: 8px 16px;
+    display: block;      // override desktop display:contents
+    position: relative;  // anchor for ::after
+    margin: 0;           // full width — same as chip row
 
     // Scroll hint arrow — matches design stroke style
     &::after {
       content: '\203A';
       position: absolute;
-      right: 8px;
+      right: 10px;
       top: 50%;
       transform: translateY(-50%);
       width: 26px;
@@ -1700,7 +1700,7 @@
     }
   }
 
-  // ── Filter bar: NOT sticky on mobile, horizontal scrollable ──
+  // ── Filter bar: NOT sticky, full-width horizontal scrollable bar ──
   .shop-filter-bar {
     position: static;
     top: auto;
@@ -1710,9 +1710,14 @@
     align-items: center;
     min-height: auto;
     gap: 10px;
-    margin: 0;            // outer handles margin
-    padding: 9px 36px 9px 14px;  // right pad leaves room for arrow
-    border-radius: 10px;
+    margin: 0;
+    padding: 10px 46px 10px 16px; // right pad leaves room for arrow
+    // Full-width bar style — no card box, just top/bottom dividers
+    border: none;
+    border-top: 1px solid $stroke-grey;
+    border-bottom: 1px solid $stroke-grey;
+    border-radius: 0;
+    background: $pure-white;
     overflow-x: auto;
     scrollbar-width: none;
 
