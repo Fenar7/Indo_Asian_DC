@@ -24,10 +24,24 @@
 }
 
 .login-card__logo {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
   width: 63px;
   height: 63px;
-  object-fit: contain;
-  flex-shrink: 0;
+  background: $main-cta-red;
+  color: $pure-white;
+  padding: 7px 6px 6px;
+  font-family: $font-sf-pro;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: 0.02em;
+  text-align: center;
+
+  span {
+    display: block;
+  }
 }
 
 .login-card__content {
@@ -158,6 +172,7 @@
   .login-card__logo {
     width: 58px;
     height: 58px;
+    font-size: 9px;
   }
 
   .login-card__title {

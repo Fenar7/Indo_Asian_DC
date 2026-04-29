@@ -19,6 +19,7 @@ type CartContextValue = {
   items: CartLineItem[];
   totalItems: number;
   subtotal: number;
+  hydrated: boolean; // false until localStorage has been read on the client
   addToCart: (product: Omit<CartLineItem, "quantity">) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, qty: number) => void;
@@ -34,6 +35,10 @@ const STORAGE_KEY = "indo_asian_cart";
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  // hydrated: false on server / before useEffect runs, true after
+  // localStorage is confirmed available on the client.
+  const [hydrated, setHydrated] = useState(false);
+
   // Lazy initializer — reads localStorage synchronously on first render.
   // This prevents the race where the persist effect fires before hydration
   // and writes [] back to localStorage, wiping the saved cart.
@@ -47,10 +52,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
+  // Mark as hydrated after first client-side render
+  useEffect(() => { setHydrated(true); }, []);
+
   // Persist to localStorage on every change (runs AFTER correct initial state)
   useEffect(() => {
+    if (!hydrated) return; // skip the server-side pass
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+  }, [items, hydrated]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -92,7 +101,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ items, totalItems, subtotal, addToCart, removeFromCart, updateQuantity, clearCart }}
+      value={{ items, totalItems, subtotal, hydrated, addToCart, removeFromCart, updateQuantity, clearCart }}
     >
       {children}
     </CartContext.Provider>

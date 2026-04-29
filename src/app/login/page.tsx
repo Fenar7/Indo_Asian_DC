@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import "./style.scss";
+import brandLogo from "../../../public/icons/indo-asian-logo-main.png";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,12 +47,11 @@ export default function LoginPage() {
       <div className="login-page-container w-full">
         <section className="login-card">
           <div className="login-card__brand">
-            {/* Real Indo Asian logo — same asset used in the shop header */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              className="login-card__logo"
-              src="/icons/indo-asian-logo-main.png"
+              src={brandLogo.src}
               alt="Indo Asian Foods"
+              style={{ width: 63, height: 63, objectFit: 'contain', borderRadius: 8 }}
             />
           </div>
 

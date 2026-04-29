@@ -643,11 +643,28 @@ function CartScrollArea({ children }: { children: React.ReactNode }) {
 // ─── CartPanel (live) ─────────────────────────────────────────────────────────
 
 function CartPanel() {
-  const { items, subtotal, updateQuantity, removeFromCart } = useCart();
+  const { items, subtotal, updateQuantity, removeFromCart, hydrated } = useCart();
   const router = useRouter();
 
   const formatINR = (n: number) =>
     `₹ ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  // ── Loading skeleton — shown until localStorage has been read ──────────────
+  if (!hydrated) {
+    return (
+      <div className="shop-cart-panel__skeleton">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="shop-cart-panel__skeleton-item">
+            <div className="shop-cart-panel__skeleton-thumb shimmer" />
+            <div className="shop-cart-panel__skeleton-lines">
+              <div className="shop-cart-panel__skeleton-line shop-cart-panel__skeleton-line--title shimmer" />
+              <div className="shop-cart-panel__skeleton-line shop-cart-panel__skeleton-line--sub shimmer" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
