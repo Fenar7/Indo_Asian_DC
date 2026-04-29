@@ -789,12 +789,14 @@
 
 .shop-sidebar__inner {
   position: sticky;
-  top: 24px;
+  // header(101) + chip-row(~77) + filter-bar(~57) + small gap = 250px
+  top: 250px;
   display: flex;
   flex-direction: column;
   gap: 15px;
   padding: 22px 8px 22px 14px;
-  max-height: calc(100vh - 48px);
+  // viewport minus everything above the sidebar start
+  max-height: calc(100vh - 265px);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -1192,15 +1194,24 @@
   gap: 0;
   flex: 1;               // grow to fill available space
   min-height: 0;         // allow shrinking so subtotal stays visible
-  overflow-y: auto;
+  overflow-y: scroll;    // always show scrollbar track so user sees there's more
   scrollbar-width: thin;
+  scrollbar-color: #d0d0d0 #f2f2f2; // thumb | track — always visible
 
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f2f2f2;
+    border-radius: 4px;
   }
   &::-webkit-scrollbar-thumb {
-    background: $cloud-grey;
+    background: #c8c8c8;
     border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
   }
 }
 
