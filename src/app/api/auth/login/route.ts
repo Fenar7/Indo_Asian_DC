@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Password correct — set secure httpOnly cookie
-    const secret = process.env.SITE_AUTH_SECRET!;
+    const secret = process.env.SITE_AUTH_SECRET;
+    if (!secret) {
+      console.error("[auth/login] SITE_AUTH_SECRET is not set in environment variables");
+      return NextResponse.json({ error: "Server misconfiguration: auth secret missing." }, { status: 500 });
+    }
+
     const res = NextResponse.json({ ok: true }, { status: 200 });
 
     res.cookies.set("site_auth", secret, {

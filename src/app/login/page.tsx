@@ -33,9 +33,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Authenticated — go to homepage
-      router.push("/");
-      router.refresh();
+      // Hard redirect so the middleware sees the new cookie on the very first request
+      window.location.href = "/";
     } catch {
       setError("Network error. Please check your connection.");
     } finally {
