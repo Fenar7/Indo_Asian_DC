@@ -3,11 +3,40 @@ import "./globals.scss";
 import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
-  title: "Indo Asian Foods Ltd | Premium Groceries & Spices",
-  description: "Discover premium groceries, authentic spices, and daily essentials at Indo Asian Foods. Explore our fresh selections, festival offers, and high-quality products.",
+  title: {
+    default: "Indo Asian Foods Ltd | Premium Indian Groceries & Spices",
+    template: "%s | Indo Asian Foods Ltd",
+  },
+  description:
+    "Shop authentic Indian groceries, fresh spices, Kerala taste products, rice, masalas, snacks and daily essentials at Indo Asian Foods Ltd — your trusted source for premium quality products.",
+  keywords: [
+    "Indo Asian Foods",
+    "Indian groceries",
+    "Kerala products",
+    "spices",
+    "masala",
+    "rice",
+    "Double Horse",
+    "Eastern Masala",
+    "online grocery",
+  ],
+  openGraph: {
+    title: "Indo Asian Foods Ltd | Premium Indian Groceries & Spices",
+    description:
+      "Authentic Indian groceries, spices, Kerala taste products and daily essentials — delivered fresh to your door.",
+    siteName: "Indo Asian Foods Ltd",
+    locale: "en_IN",
+    type: "website",
+  },
   icons: {
-    icon: "/icons/indo-asian-logo-main.png?v=2", // Forces explicit favicon path and busts cache
-    apple: "/icons/indo-asian-logo-main.png?v=2",
+    // app/icon.png is replaced with the real logo — Next.js auto-serves it
+    // as /icon.png and it takes highest priority over metadata.icons.
+    // These explicit entries are a belt-and-suspenders fallback:
+    icon: [
+      { url: "/icons/indo-asian-logo-main.png", type: "image/png" },
+    ],
+    apple: "/icons/indo-asian-logo-main.png",
+    shortcut: "/icons/indo-asian-logo-main.png",
   },
 };
 

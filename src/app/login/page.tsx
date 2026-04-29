@@ -46,11 +46,13 @@ export default function LoginPage() {
       <div className="login-page-container w-full">
         <section className="login-card">
           <div className="login-card__brand">
-            <div className="login-card__logo" aria-hidden="true">
-              <span>INDO</span>
-              <span>ASIAN</span>
-              <span>FOOD</span>
-            </div>
+            {/* Real Indo Asian logo — same asset used in the shop header */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="login-card__logo"
+              src="/icons/indo-asian-logo-main.png"
+              alt="Indo Asian Foods"
+            />
           </div>
 
           <div className="login-card__content">
