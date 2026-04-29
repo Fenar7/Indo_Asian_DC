@@ -10,7 +10,6 @@ export const productType = defineType({
       title: "Product Image",
       type: "image",
       options: { hotspot: true },
-      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "name",
@@ -27,13 +26,11 @@ export const productType = defineType({
         maxLength: 96,
       },
       description: "Auto-generated from product name. Used for product URL.",
-      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "code",
       title: "Product Code",
       type: "string",
-      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "unit",

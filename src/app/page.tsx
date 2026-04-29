@@ -7,7 +7,7 @@ import {
 } from "@/components/shop-page/ShopPageScreen";
 import { client } from "@/sanity/lib/client";
 
-export const revalidate = 60;
+export const revalidate = 0;
 
 export default async function Home() {
   // Hero Slider query
@@ -57,6 +57,7 @@ export default async function Home() {
     }
     if (productsData && Array.isArray(productsData)) {
       fetchedProducts = productsData;
+      console.log("[Server] products:", fetchedProducts.length, "sample categoryId:", fetchedProducts[0]?.categoryId);
     }
   } catch (error) {
     console.error("Failed to fetch data from Sanity:", error);

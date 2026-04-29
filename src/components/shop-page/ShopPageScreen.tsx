@@ -572,6 +572,13 @@ export function ShopPageScreen({
   categories?: SanityCategory[];
   products?: SanityProduct[];
 }) {
+  // Debug: log data received from server
+  useEffect(() => {
+    console.log("[ShopPageScreen] products:", products.length, "categories:", categories.length);
+    console.log("[ShopPageScreen] sample product:", products[0]);
+    console.log("[ShopPageScreen] sample category:", categories[0]);
+  }, [products, categories]);
+
   const { totalItems } = useCart();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
