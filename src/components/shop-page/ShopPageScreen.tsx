@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -60,8 +61,8 @@ function matchesQuery(product: SanityProduct, query: string): boolean {
   const q = query.toLowerCase().trim();
   if (!q) return true;
   return (
-    product.name.toLowerCase().includes(q) ||
-    product.code.toLowerCase().includes(q) ||
+    (product.name?.toLowerCase().includes(q) ?? false) ||
+    (product.code?.toLowerCase().includes(q) ?? false) ||
     (product.unit?.toLowerCase().includes(q) ?? false) ||
     (product.weight?.toLowerCase().includes(q) ?? false)
   );
@@ -266,41 +267,128 @@ function SearchBar({ placeholder, className, products, onSearch }: SearchBarProp
   const [suggestions, setSuggestions] = useState<SanityProduct[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [dropdownPos, setDropdownPos] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useClickOutside(wrapperRef, () => { setIsOpen(false); setActiveIndex(-1); });
+  // SSR guard — portal needs document.body
+  useEffect(() => setMounted(true), []);
+
+  // Click-outside: close if click is outside BOTH the input wrapper AND the
+  // portalled dropdown. Standard useClickOutside won't work because the portal
+  // lives outside wrapperRef in the DOM tree.
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      const target = e.target as Node;
+      const insideWrapper = wrapperRef.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideWrapper && !insideDropdown) {
+        setIsOpen(false);
+        setActiveIndex(-1);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  function calcPos() {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setDropdownPos({ top: r.bottom + 6, left: r.left, width: r.width });
+  }
+
+  // ─ Core search logic ─────────────────────────────────────────────────────
+  // Filters as-you-type (instant), plus shows suggestion dropdown.
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
     setQuery(value);
     setActiveIndex(-1);
-    if (value.trim().length === 0) {
-      setSuggestions([]); setIsOpen(false); onSearch(""); return;
+
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      setSuggestions([]);
+      setIsOpen(false);
+      onSearch("");
+      return;
     }
-    const matched = products.filter((p) => matchesQuery(p, value)).slice(0, 8);
+
+    // Instant filter — products grid updates on every keystroke
+    onSearch(trimmed);
+
+    // Build suggestions
+    const matched = products
+      .filter((p) => matchesQuery(p, trimmed))
+      .slice(0, 8);
     setSuggestions(matched);
-    setIsOpen(matched.length > 0);
+
+    if (matched.length > 0) {
+      calcPos();
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    // Enter should ALWAYS commit search (even if dropdown is closed)
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (isOpen && activeIndex >= 0) {
+        selectSuggestion(suggestions[activeIndex]);
+      } else {
+        commitSearch(query);
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+
+    // Arrow keys only when dropdown is open
     if (!isOpen) return;
-    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIndex((i) => Math.max(i - 1, -1)); }
-    else if (e.key === "Enter") { activeIndex >= 0 ? selectSuggestion(suggestions[activeIndex]) : commitSearch(query); }
-    else if (e.key === "Escape") { setIsOpen(false); setActiveIndex(-1); }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, -1));
+    }
   }
 
   function selectSuggestion(product: SanityProduct) {
-    setQuery(product.name); setSuggestions([]); setIsOpen(false); setActiveIndex(-1); onSearch(product.name);
+    setQuery(product.name);
+    setSuggestions([]);
+    setIsOpen(false);
+    setActiveIndex(-1);
+    onSearch(product.name);
   }
 
   function commitSearch(value: string) {
-    setSuggestions([]); setIsOpen(false); setActiveIndex(-1); onSearch(value);
+    setSuggestions([]);
+    setIsOpen(false);
+    setActiveIndex(-1);
+    onSearch(value.trim());
   }
 
   function handleClear() {
-    setQuery(""); setSuggestions([]); setIsOpen(false); setActiveIndex(-1); onSearch(""); inputRef.current?.focus();
+    setQuery("");
+    setSuggestions([]);
+    setIsOpen(false);
+    setActiveIndex(-1);
+    onSearch("");
+    inputRef.current?.focus();
   }
 
   function highlightMatch(text: string, q: string) {
@@ -316,8 +404,65 @@ function SearchBar({ placeholder, className, products, onSearch }: SearchBarProp
     );
   }
 
+  // ─ Portal dropdown ───────────────────────────────────────────────────────
+  // Rendered into document.body so it escapes the sticky header's stacking
+  // context and always paints on top.
+
+  const suggestionsDropdown =
+    mounted && isOpen && suggestions.length > 0 && dropdownPos
+      ? createPortal(
+          <ul
+            ref={dropdownRef}
+            className="shop-search__suggestions"
+            role="listbox"
+            style={{
+              position: "fixed",
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              width: dropdownPos.width,
+              zIndex: 9999,
+            }}
+          >
+            {suggestions.map((product, index) => (
+              <li
+                key={product._id}
+                role="option"
+                aria-selected={index === activeIndex}
+                className={`shop-search__suggestion-item ${
+                  index === activeIndex ? "is-active" : ""
+                }`}
+                onMouseDown={(e) => {
+                  e.preventDefault(); // prevent blur → keeps dropdown alive
+                  selectSuggestion(product);
+                }}
+                onMouseEnter={() => setActiveIndex(index)}
+              >
+                <div className="shop-search__suggestion-media">
+                  <img
+                    alt={product.name}
+                    src={product.image ?? productImage}
+                  />
+                </div>
+                <div className="shop-search__suggestion-info">
+                  <span className="shop-search__suggestion-name">
+                    {highlightMatch(product.name, query)}
+                  </span>
+                  <span className="shop-search__suggestion-code">
+                    {product.code}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>,
+          document.body
+        )
+      : null;
+
   return (
-    <div className={`shop-search-wrapper ${className ?? ""}`.trim()} ref={wrapperRef}>
+    <div
+      className={`shop-search-wrapper ${className ?? ""}`.trim()}
+      ref={wrapperRef}
+    >
       <label className="shop-search">
         <img alt="" className="shop-search__icon" src={searchIcon} />
         <input
@@ -329,38 +474,26 @@ function SearchBar({ placeholder, className, products, onSearch }: SearchBarProp
           type="text"
           value={query}
           onChange={handleChange}
-          onFocus={() => { if (suggestions.length > 0) setIsOpen(true); }}
+          onFocus={() => {
+            if (suggestions.length > 0) {
+              calcPos();
+              setIsOpen(true);
+            }
+          }}
           onKeyDown={handleKeyDown}
         />
         {query && (
-          <button aria-label="Clear search" className="shop-search__clear" type="button" onClick={handleClear}>
+          <button
+            aria-label="Clear search"
+            className="shop-search__clear"
+            type="button"
+            onClick={handleClear}
+          >
             ✕
           </button>
         )}
       </label>
-
-      {isOpen && suggestions.length > 0 && (
-        <ul className="shop-search__suggestions" role="listbox">
-          {suggestions.map((product, index) => (
-            <li
-              key={product._id}
-              role="option"
-              aria-selected={index === activeIndex}
-              className={`shop-search__suggestion-item ${index === activeIndex ? "is-active" : ""}`}
-              onMouseDown={() => selectSuggestion(product)}
-              onMouseEnter={() => setActiveIndex(index)}
-            >
-              <div className="shop-search__suggestion-media">
-                <img alt={product.name} src={product.image ?? productImage} />
-              </div>
-              <div className="shop-search__suggestion-info">
-                <span className="shop-search__suggestion-name">{highlightMatch(product.name, query)}</span>
-                <span className="shop-search__suggestion-code">{product.code}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      {suggestionsDropdown}
     </div>
   );
 }
@@ -447,6 +580,66 @@ function ProductCard({ product, variant }: ProductCardProps) {
   );
 }
 
+// ─── CartScrollArea – real DOM custom scrollbar (macOS-proof) ────────────────
+//
+// macOS overlays scrollbars and hides them regardless of CSS.
+// The only reliable fix is to build the scrollbar as actual DOM nodes.
+//
+function CartScrollArea({ children }: { children: React.ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [thumb, setThumb] = useState({ top: 0, height: 0 });
+  const [canScroll, setCanScroll] = useState(false);
+
+  const recalc = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollable = el.scrollHeight > el.clientHeight + 1;
+    setCanScroll(scrollable);
+    if (scrollable) {
+      const ratio    = el.clientHeight / el.scrollHeight;
+      const h        = Math.max(ratio * el.clientHeight, 36);
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      const maxTop   = el.clientHeight - h;
+      setThumb({
+        height: h,
+        top: maxScroll > 0 ? (el.scrollTop / maxScroll) * maxTop : 0,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    recalc();
+    el.addEventListener("scroll", recalc, { passive: true });
+    const ro = new ResizeObserver(recalc);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", recalc);
+      ro.disconnect();
+    };
+  }, [recalc]);
+
+  return (
+    <div className="cart-scroll-area">
+      <div ref={scrollRef} className="shop-cart-panel__items-list">
+        {children}
+      </div>
+      {/* Always-visible custom scrollbar track + thumb */}
+      <div className="cart-scrollbar-track" aria-hidden>
+        <div
+          className="cart-scrollbar-thumb"
+          style={{
+            height: thumb.height,
+            transform: `translateY(${thumb.top}px)`,
+            opacity: canScroll ? 1 : 0,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── CartPanel (live) ─────────────────────────────────────────────────────────
 
 function CartPanel() {
@@ -467,7 +660,7 @@ function CartPanel() {
 
   return (
     <div className="shop-cart-panel__filled">
-      <div className="shop-cart-panel__items-list">
+      <CartScrollArea>
         {items.map((item) => (
           <div className="shop-cart-panel__item" key={item._id}>
             <div className="shop-cart-panel__item-media">
@@ -504,7 +697,7 @@ function CartPanel() {
             </div>
           </div>
         ))}
-      </div>
+      </CartScrollArea>
 
       <div className="shop-cart-panel__subtotal">
         <p>Subtotal</p>

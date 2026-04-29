@@ -34,19 +34,20 @@ const STORAGE_KEY = "indo_asian_cart";
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartLineItem[]>([]);
-
-  // Hydrate from localStorage once on mount
-  useEffect(() => {
+  // Lazy initializer — reads localStorage synchronously on first render.
+  // This prevents the race where the persist effect fires before hydration
+  // and writes [] back to localStorage, wiping the saved cart.
+  const [items, setItems] = useState<CartLineItem[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setItems(JSON.parse(stored));
+      return stored ? (JSON.parse(stored) as CartLineItem[]) : [];
     } catch {
-      // ignore parse errors
+      return [];
     }
-  }, []);
+  });
 
-  // Persist to localStorage on every change
+  // Persist to localStorage on every change (runs AFTER correct initial state)
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);

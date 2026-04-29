@@ -126,11 +126,7 @@
 }
 
 .shop-search__suggestions {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 200;
+  // position & z-index injected inline by the portal — do not set here
   list-style: none;
   margin: 0;
   padding: 8px 0;
@@ -1192,27 +1188,45 @@
 .shop-cart-panel__items-list {
   display: grid;
   gap: 0;
-  flex: 1;               // grow to fill available space
-  min-height: 0;         // allow shrinking so subtotal stays visible
-  overflow-y: scroll;    // always show scrollbar track so user sees there's more
-  scrollbar-width: thin;
-  scrollbar-color: #d0d0d0 #f2f2f2; // thumb | track — always visible
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  // Hide the native browser scrollbar completely —
+  // CartScrollArea renders its own always-visible custom scrollbar.
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
 
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-  &::-webkit-scrollbar-track {
-    background: #f2f2f2;
-    border-radius: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #c8c8c8;
-    border-radius: 4px;
-    transition: background 0.2s ease;
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: #a0a0a0;
-  }
+// ─ Custom always-visible scrollbar (macOS-proof) ─────────────────────────
+.cart-scroll-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden; // clip the content — items-list scrolls inside
+}
+
+.cart-scrollbar-track {
+  position: absolute;
+  right: 3px;
+  top: 6px;
+  bottom: 6px;
+  width: 5px;
+  background: #e4e4e4;
+  border-radius: 3px;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.cart-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.38);
+  pointer-events: none;
+  transition: background 0.15s ease, opacity 0.2s ease;
 }
 
 .shop-cart-panel__item {

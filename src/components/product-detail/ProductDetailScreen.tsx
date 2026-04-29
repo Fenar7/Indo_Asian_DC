@@ -8,8 +8,9 @@ const brandLogo = "/icons/indo-asian-logo-main.png";
 const cartIcon = "/icons/shopping-card-icon.png";
 const quantityPlus = "/icons/plus-red-icon.png";
 const quantityMinus = "/icons/minus-icon.png";
-const addToCartPlus = "/icons/plus-red-icon.png";
-const cardPlus = "/icons/plus-red-icon.png";
+// Inline white SVG plus — used on the red CTA button so it’s visible
+const addToCartPlusSvg = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E";
+const cardPlusSvg = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E";
 const searchIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E";
 const fallbackImage = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
 
@@ -74,7 +75,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
             <p>{product.price}</p>
             <button type="button" onClick={(e) => e.preventDefault()}>
               <span>Add to Cart</span>
-              <img alt="" src={cardPlus} />
+              <img alt="" src={cardPlusSvg} />
             </button>
           </div>
         </div>
@@ -156,7 +157,7 @@ function ProductSummary({ product }: { product: ProductDetailData }) {
 
         <button className="product-summary__cta" type="button">
           <span>Add to Cart</span>
-          <img alt="" src={addToCartPlus} />
+          <img alt="" src={addToCartPlusSvg} />
         </button>
       </div>
 
