@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Product source files (uploaded to Sanity, not needed in repo)
+product-files/
