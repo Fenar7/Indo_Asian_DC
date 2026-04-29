@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     console.log(`\n📦 Order ${orderCode} | ${customer.name} | Rs.${total}`);
     sendViaGreenApi(message).catch((e) => console.error("[place-order] WhatsApp error:", e));
 
-    return NextResponse.json({ orderCode }, { status: 200 });
+    return NextResponse.json({ orderCode, message }, { status: 200 });
   } catch (err) {
     console.error("[place-order] Unexpected error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import "./style.scss";
 import brandLogo from "../../../public/icons/indo-asian-logo-main.png";
 
@@ -47,12 +48,14 @@ export default function LoginPage() {
       <div className="login-page-container w-full">
         <section className="login-card">
           <div className="login-card__brand">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={brandLogo.src}
-              alt="Indo Asian Foods"
-              style={{ width: 63, height: 63, objectFit: 'contain', borderRadius: 8 }}
-            />
+            <Link href="/">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={brandLogo.src}
+                alt="Indo Asian Foods"
+                style={{ width: 63, height: 63, objectFit: 'contain', borderRadius: 8 }}
+              />
+            </Link>
           </div>
 
           <div className="login-card__content">

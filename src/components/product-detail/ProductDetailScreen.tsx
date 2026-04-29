@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
 
 const brandLogo = "/icons/indo-asian-logo-main.png";
 const cartIcon = "/icons/shopping-card-icon.png";
@@ -55,6 +56,7 @@ function HeaderSearch() {
 // ─── Related Product Card ─────────────────────────────────────────────────────
 
 function RelatedProductCard({ product }: { product: RelatedProduct }) {
+  const { addToCart } = useCart();
   const href = `/product/${product._id}`;
   return (
     <Link href={href} className="related-product-card-link">
@@ -73,7 +75,18 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
           </dl>
           <div className="related-product-card__footer">
             <p>{product.price}</p>
-            <button type="button" onClick={(e) => e.preventDefault()}>
+            <button type="button" onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              addToCart({
+                _id: product._id,
+                name: product.name,
+                price: product.price || "₹ 0",
+                image: product.image,
+                code: product.code,
+                weight: product.weight
+              });
+            }}>
               <span>Add to Cart</span>
               <img alt="" src={cardPlusSvg} />
             </button>
@@ -119,6 +132,7 @@ function ProductGallery({ mainImage, name }: { mainImage?: string; name: string 
 // ─── Product Summary ──────────────────────────────────────────────────────────
 
 function ProductSummary({ product }: { product: ProductDetailData }) {
+  const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
 
   return (
@@ -155,7 +169,24 @@ function ProductSummary({ product }: { product: ProductDetailData }) {
           </button>
         </div>
 
-        <button className="product-summary__cta" type="button">
+        <button
+          className="product-summary__cta"
+          type="button"
+          onClick={() => {
+            for (let i = 0; i < qty; i++) {
+              addToCart({
+                _id: product._id,
+                name: product.name,
+                price: product.price || "₹ 0",
+                image: product.image,
+                code: product.code,
+                weight: product.weight
+              });
+            }
+            // Reset qty to 1 after adding
+            setQty(1);
+          }}
+        >
           <span>Add to Cart</span>
           <img alt="" src={addToCartPlusSvg} />
         </button>
@@ -187,6 +218,8 @@ type ProductDetailScreenProps = {
 };
 
 export function ProductDetailScreen({ product, relatedProducts = [] }: ProductDetailScreenProps) {
+  const { totalItems } = useCart();
+
   const breadcrumbs = [
     { label: "Home", href: "/" },
     ...(product.categoryName ? [{ label: product.categoryName, href: "/" }] : []),
@@ -203,10 +236,10 @@ export function ProductDetailScreen({ product, relatedProducts = [] }: ProductDe
         </div>
         <div className="product-detail-header__actions">
           <HeaderSearch />
-          <button className="product-detail-header__cart" type="button">
+          <Link href="/cart-page" className="product-detail-header__cart">
             <img alt="" src={cartIcon} />
-            <span>0</span>
-          </button>
+            {totalItems > 0 && <span>{totalItems}</span>}
+          </Link>
         </div>
       </header>
 

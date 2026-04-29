@@ -29,14 +29,11 @@ export const metadata: Metadata = {
     type: "website",
   },
   icons: {
-    // app/icon.png is replaced with the real logo — Next.js auto-serves it
-    // as /icon.png and it takes highest priority over metadata.icons.
-    // These explicit entries are a belt-and-suspenders fallback:
     icon: [
-      { url: "/icons/indo-asian-logo-main.png", type: "image/png" },
+      { url: "/icons/indo-asian-logo-main.png?v=5", type: "image/png" },
     ],
-    apple: "/icons/indo-asian-logo-main.png",
-    shortcut: "/icons/indo-asian-logo-main.png",
+    apple: "/icons/indo-asian-logo-main.png?v=5",
+    shortcut: "/icons/indo-asian-logo-main.png?v=5",
   },
 };
 

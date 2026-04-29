@@ -175,6 +175,13 @@ export function CartPageScreen() {
       const data = await res.json();
       if (!res.ok) { alert(data.error ?? "Something went wrong. Please try again."); return; }
 
+      // Bulletproof fallback: Open WhatsApp on the user's device directly
+      // This ensures the order reaches you even if Green API is disconnected
+      if (data.message) {
+        const waUrl = `https://wa.me/917558895355?text=${encodeURIComponent(data.message)}`;
+        window.open(waUrl, "_blank");
+      }
+
       setOrderCode(data.orderCode);
       clearCart();
     } catch {
