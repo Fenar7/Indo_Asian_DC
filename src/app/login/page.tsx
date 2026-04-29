@@ -26,17 +26,18 @@ export default function LoginPage() {
         body: JSON.stringify({ password }),
       });
 
-      const data = await res.json();
+      let data: { ok?: boolean; error?: string } = {};
+      try { data = await res.json(); } catch { /* non-JSON response */ }
 
       if (!res.ok) {
-        setError(data.error ?? "Incorrect password. Please try again.");
+        setError(data.error ?? `Login failed (HTTP ${res.status}). Please try again.`);
         return;
       }
 
-      // Hard redirect so the middleware sees the new cookie on the very first request
+      // Hard redirect so the middleware sees the new cookie immediately
       window.location.href = "/";
-    } catch {
-      setError("Network error. Please check your connection.");
+    } catch (err) {
+      setError(`Network error: ${err instanceof Error ? err.message : "Please check your connection."}`);
     } finally {
       setLoading(false);
     }

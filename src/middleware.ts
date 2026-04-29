@@ -23,7 +23,7 @@ export function middleware(req: NextRequest) {
   if (isPublic(pathname)) return NextResponse.next();
 
   const authCookie = req.cookies.get("site_auth")?.value;
-  const secret = process.env.SITE_AUTH_SECRET;
+  const secret = process.env.SITE_AUTH_SECRET?.trim();
 
   if (!secret || authCookie !== secret) {
     const loginUrl = req.nextUrl.clone();
