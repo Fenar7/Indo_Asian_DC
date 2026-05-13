@@ -6,16 +6,15 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import NoImage from "../common/NoImage";
 
 const brandLogo = "/icons/indo-asian-logo-main.png";
 const cartIcon = "/icons/shopping-card-icon.png";
-const heroBanner = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
+const plusIcon = "/icons/plus-red-icon.png";
+const searchIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E";
 const filterIcon = "/icons/filter-icon.png";
 const dropdownIcon = "/icons/down-arrow-icon.png";
 const gridIcon = "/icons/grid-view-icon.png";
-const productImage = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
-const plusIcon = "/icons/plus-red-icon.png";
-const searchIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E";
 const listIcon = "/icons/list-view-icon.png";
 const cartDeleteIcon = "/icons/dustbin-icon.png";
 const cartProceedIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E";
@@ -438,10 +437,11 @@ function SearchBar({ placeholder, className, products, onSearch }: SearchBarProp
                 onMouseEnter={() => setActiveIndex(index)}
               >
                 <div className="shop-search__suggestion-media">
-                  <img
-                    alt={product.name}
-                    src={product.image ?? productImage}
-                  />
+                  {product.image ? (
+                    <img alt={product.name} src={product.image} />
+                  ) : (
+                    <NoImage />
+                  )}
                 </div>
                 <div className="shop-search__suggestion-info">
                   <span className="shop-search__suggestion-name">
@@ -525,7 +525,11 @@ function ProductCard({ product, variant }: ProductCardProps) {
       <Link href={href} className="shop-product-card-link">
         <article className="shop-product-card shop-product-card--list">
           <div className="shop-product-card__media shop-product-card__media--list">
-            <img alt={product.name} src={product.image ?? productImage} />
+            {product.image ? (
+              <img alt={product.name} src={product.image} />
+            ) : (
+              <NoImage />
+            )}
           </div>
           <div className="shop-product-card__content shop-product-card__content--list">
             <div className="shop-product-card__head shop-product-card__head--list">
@@ -556,7 +560,11 @@ function ProductCard({ product, variant }: ProductCardProps) {
     <Link href={href} className="shop-product-card-link">
       <article className="shop-product-card">
         <div className="shop-product-card__media">
-          <img alt={product.name} src={product.image ?? productImage} />
+          {product.image ? (
+            <img alt={product.name} src={product.image} />
+          ) : (
+            <NoImage />
+          )}
         </div>
         <div className="shop-product-card__content">
           <div className="shop-product-card__head">
@@ -681,7 +689,11 @@ function CartPanel() {
         {items.map((item) => (
           <div className="shop-cart-panel__item" key={item._id}>
             <div className="shop-cart-panel__item-media">
-              <img alt={item.name} src={item.image ?? productImage} />
+              {item.image ? (
+                <img alt={item.name} src={item.image} />
+              ) : (
+                <NoImage />
+              )}
             </div>
             <div className="shop-cart-panel__item-main">
               <h3>{item.name}</h3>

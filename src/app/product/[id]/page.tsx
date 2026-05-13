@@ -6,6 +6,7 @@ import {
   RelatedProduct,
 } from "@/components/product-detail/ProductDetailScreen";
 import { client } from "@/sanity/lib/client";
+import { unstable_noStore } from "next/cache";
 
 export const revalidate = 60;
 
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default async function ProductPage({ params }: Props) {
+  unstable_noStore(); // ensure fresh Sanity data on every request
   const { id } = await params;
 
   // Fetch by _id — works for all existing products immediately

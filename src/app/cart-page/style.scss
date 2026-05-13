@@ -515,6 +515,27 @@
   }
 }
 
+.order-modal__pdf-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: rgba($main-cta-red, 0.08);
+  color: $main-cta-red;
+  font-family: $font-sf-pro;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba($main-cta-red, 0.14);
+  }
+}
+
 .order-modal__note {
   margin: 20px 0 0;
   color: $hash-grey-2;

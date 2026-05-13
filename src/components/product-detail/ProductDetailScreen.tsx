@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import NoImage from "../common/NoImage";
 
 const brandLogo = "/icons/indo-asian-logo-main.png";
 const cartIcon = "/icons/shopping-card-icon.png";
@@ -13,7 +14,6 @@ const quantityMinus = "/icons/minus-icon.png";
 const addToCartPlusSvg = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E";
 const cardPlusSvg = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E";
 const searchIcon = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentcolor' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E";
-const fallbackImage = "/icons/Screenshot 2026-04-02 at 11.12.24 AM 1.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,7 +62,11 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
     <Link href={href} className="related-product-card-link">
       <article className="related-product-card">
         <div className="related-product-card__media">
-          <img alt={product.name} src={product.image ?? fallbackImage} />
+          {product.image ? (
+            <img alt={product.name} src={product.image} />
+          ) : (
+            <NoImage />
+          )}
         </div>
         <div className="related-product-card__content">
           <div className="related-product-card__head">
@@ -100,15 +104,19 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 // ─── Product Gallery ──────────────────────────────────────────────────────────
 
 function ProductGallery({ mainImage, name }: { mainImage?: string; name: string }) {
-  const [activeImage, setActiveImage] = useState(mainImage ?? fallbackImage);
+  const [activeImage, setActiveImage] = useState<string | undefined>(mainImage);
 
-  // Currently only one real image; we show it as the first thumb
+  // Only show thumbs when a real image exists
   const thumbs = mainImage ? [{ id: "main", src: mainImage }] : [];
 
   return (
     <div className="product-gallery">
       <div className="product-gallery__stage">
-        <img alt={name} src={activeImage} />
+        {activeImage ? (
+          <img alt={name} src={activeImage} />
+        ) : (
+          <NoImage />
+        )}
       </div>
 
       {thumbs.length > 0 && (

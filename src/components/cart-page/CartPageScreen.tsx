@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
+import NoImage from "../common/NoImage";
 
 // ─── Assets ───────────────────────────────────────────────────────────────────
 
@@ -37,7 +38,11 @@ function CartItem({ item }: { item: LineItem }) {
   return (
     <article className="cart-line-item">
       <div className="cart-line-item__media">
-        <img alt={item.name} src={item.image ?? fallbackImg} />
+        {item.image ? (
+          <img alt={item.name} src={item.image} />
+        ) : (
+          <NoImage />
+        )}
       </div>
       <div className="cart-line-item__content">
         <h3>{item.name}</h3>
@@ -67,7 +72,7 @@ function CartItem({ item }: { item: LineItem }) {
 
 // ─── Success Modal ────────────────────────────────────────────────────────────
 
-function SuccessModal({ orderCode, onClose }: { orderCode: string; onClose: () => void }) {
+function SuccessModal({ orderCode, pdfUrl, onClose }: { orderCode: string; pdfUrl?: string | null; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   function handleCopy() {
     navigator.clipboard.writeText(orderCode).then(() => {
@@ -97,6 +102,17 @@ function SuccessModal({ orderCode, onClose }: { orderCode: string; onClose: () =
             </button>
           </div>
         </div>
+        {pdfUrl && (
+          <a
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="order-modal__pdf-link"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Download Invoice PDF
+          </a>
+        )}
         <p className="order-modal__note">Save your order code for reference. You'll hear from us soon.</p>
         <Link href="/" className="order-modal__cta" onClick={onClose}>Continue Shopping</Link>
       </div>
@@ -141,13 +157,12 @@ export function CartPageScreen() {
   const [errors,    setErrors]    = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [orderCode, setOrderCode] = useState<string | null>(null);
+  const [pdfUrl,    setPdfUrl]    = useState<string | null>(null);
 
   function validate() {
     const e: Record<string, string> = {};
     if (!name.trim())         e.name         = "Name is required";
     if (!businessName.trim()) e.businessName = "Business name is required";
-    if (!address1.trim())     e.address1     = "Address is required";
-    if (!zip.trim())          e.zip          = "Zip code is required";
     return e;
   }
 
@@ -175,14 +190,14 @@ export function CartPageScreen() {
       const data = await res.json();
       if (!res.ok) { alert(data.error ?? "Something went wrong. Please try again."); return; }
 
-      // Bulletproof fallback: Open WhatsApp on the user's device directly
-      // This ensures the order reaches you even if Green API is disconnected
+      // Fallback: if PDF could not be sent via Green API, open wa.me with text
       if (data.message) {
         const waUrl = `https://wa.me/917558895355?text=${encodeURIComponent(data.message)}`;
         window.open(waUrl, "_blank");
       }
 
       setOrderCode(data.orderCode);
+      if (data.pdfUrl) setPdfUrl(data.pdfUrl);
       clearCart();
     } catch {
       alert("Network error. Please check your connection and try again.");
@@ -193,7 +208,7 @@ export function CartPageScreen() {
 
   return (
     <>
-      {orderCode && <SuccessModal orderCode={orderCode} onClose={() => setOrderCode(null)} />}
+      {orderCode && <SuccessModal orderCode={orderCode} pdfUrl={pdfUrl} onClose={() => { setOrderCode(null); setPdfUrl(null); }} />}
 
       <section className="cart-page">
         {/* Header */}
@@ -241,11 +256,11 @@ export function CartPageScreen() {
                 <h2>Shipping</h2>
                 <div className="cart-form__fields">
                   <div className="cart-form__row">
-                    <CartField label="Address Line 1" placeholder="Enter the address here" required value={address1} onChange={setAddress1} error={errors.address1} />
+                    <CartField label="Address Line 1" placeholder="Enter the address here" value={address1} onChange={setAddress1} />
                   </div>
                   <div className="cart-form__row cart-form__row--double">
                     <CartField label="Address Line 2 Optional" placeholder="Enter the address here" value={address2} onChange={setAddress2} />
-                    <CartField label="Zip Code" placeholder="Enter the zip code" required value={zip} onChange={setZip} error={errors.zip} />
+                    <CartField label="Zip Code" placeholder="Enter the zip code" value={zip} onChange={setZip} />
                   </div>
                   <div className="cart-form__row">
                     <CartField label="Additional Instructions" placeholder="If there are anything to note please enter it here" value={notes} onChange={setNotes} />

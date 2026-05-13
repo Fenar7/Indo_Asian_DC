@@ -6,10 +6,13 @@ import {
   SanityProduct,
 } from "@/components/shop-page/ShopPageScreen";
 import { client } from "@/sanity/lib/client";
+import { unstable_noStore } from "next/cache";
 
 export const revalidate = 0;
 
 export default async function Home() {
+  unstable_noStore(); // ensure fresh Sanity data on every request
+
   // Hero Slider query
   const heroQuery = `*[_type == "heroSlider"][0].images[]{
     "id": _key,

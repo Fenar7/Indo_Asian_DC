@@ -42,3 +42,23 @@ next-env.d.ts
 
 # Product source files (uploaded to Sanity, not needed in repo)
 product-files/
+output/
+tmp/
+
+# Large image/asset dumps in scripts (already in Sanity)
+scripts/*.json
+scripts/output/
+
+# Image files in scripts/tmp (already uploaded to Sanity CDN, not needed in repo)
+scripts/*.jpg
+scripts/*.jpeg
+scripts/*.png
+scripts/*.webp
+scripts/*.gif
+scripts/*.bmp
+scripts/*.tiff
+tmp/*.jpg
+tmp/*.jpeg
+tmp/*.png
+tmp/*.webp
+tmp/*.json
