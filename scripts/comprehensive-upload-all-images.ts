@@ -42,6 +42,7 @@ interface SanityProduct {
   _id: string;
   code?: string;
   name?: string;
+  assetRef?: string;
   image?: any;
 }
 
