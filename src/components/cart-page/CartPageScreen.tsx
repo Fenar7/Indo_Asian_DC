@@ -72,7 +72,7 @@ function CartItem({ item }: { item: LineItem }) {
 
 // ─── Success Modal ────────────────────────────────────────────────────────────
 
-function SuccessModal({ orderCode, pdfUrl, onClose }: { orderCode: string; pdfUrl?: string | null; onClose: () => void }) {
+function SuccessModal({ orderCode, onClose }: { orderCode: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   function handleCopy() {
     navigator.clipboard.writeText(orderCode).then(() => {
@@ -102,17 +102,6 @@ function SuccessModal({ orderCode, pdfUrl, onClose }: { orderCode: string; pdfUr
             </button>
           </div>
         </div>
-        {pdfUrl && (
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="order-modal__pdf-link"
-            onClick={(e) => e.stopPropagation()}
-          >
-            Download Invoice PDF
-          </a>
-        )}
         <p className="order-modal__note">Save your order code for reference. You'll hear from us soon.</p>
         <Link href="/" className="order-modal__cta" onClick={onClose}>Continue Shopping</Link>
       </div>
@@ -157,7 +146,6 @@ export function CartPageScreen() {
   const [errors,    setErrors]    = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [orderCode, setOrderCode] = useState<string | null>(null);
-  const [pdfUrl,    setPdfUrl]    = useState<string | null>(null);
 
   function validate() {
     const e: Record<string, string> = {};
@@ -190,14 +178,13 @@ export function CartPageScreen() {
       const data = await res.json();
       if (!res.ok) { alert(data.error ?? "Something went wrong. Please try again."); return; }
 
-      // Fallback: if PDF could not be sent via Green API, open wa.me with text
+      // Open native WhatsApp share intent
       if (data.message) {
-        const waUrl = `https://wa.me/917558895355?text=${encodeURIComponent(data.message)}`;
+        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(data.message)}`;
         window.open(waUrl, "_blank");
       }
 
       setOrderCode(data.orderCode);
-      if (data.pdfUrl) setPdfUrl(data.pdfUrl);
       clearCart();
     } catch {
       alert("Network error. Please check your connection and try again.");
@@ -208,7 +195,7 @@ export function CartPageScreen() {
 
   return (
     <>
-      {orderCode && <SuccessModal orderCode={orderCode} pdfUrl={pdfUrl} onClose={() => { setOrderCode(null); setPdfUrl(null); }} />}
+      {orderCode && <SuccessModal orderCode={orderCode} onClose={() => setOrderCode(null)} />}
 
       <section className="cart-page">
         {/* Header */}
