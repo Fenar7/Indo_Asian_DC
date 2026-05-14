@@ -164,6 +164,10 @@ export function CartPageScreen() {
     setErrors({});
     setIsLoading(true);
 
+    // Open a blank window NOW (synchronously, while inside the click handler)
+    // so Safari's popup blocker allows it. We'll navigate it after the API call.
+    const waWin = typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
+
     try {
       const res = await fetch("/api/place-order", {
         method: "POST",
@@ -176,17 +180,23 @@ export function CartPageScreen() {
       });
 
       const data = await res.json();
-      if (!res.ok) { alert(data.error ?? "Something went wrong. Please try again."); return; }
+      if (!res.ok) {
+        waWin?.close();
+        alert(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
 
-      // Open native WhatsApp share intent
-      if (data.message) {
-        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(data.message)}`;
-        window.open(waUrl, "_blank");
+      // Navigate the already-opened window to WhatsApp
+      if (data.message && waWin) {
+        waWin.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(data.message)}`;
+      } else {
+        waWin?.close();
       }
 
       setOrderCode(data.orderCode);
       clearCart();
     } catch {
+      waWin?.close();
       alert("Network error. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
