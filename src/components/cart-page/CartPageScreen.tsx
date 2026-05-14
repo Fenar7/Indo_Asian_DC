@@ -67,6 +67,69 @@ function buildMessage(
   return lines.join("\n");
 }
 
+function persistOrder(payload: {
+  orderCode: string;
+  customer: { name: string; businessName: string; address1: string; address2: string; zip: string; notes: string };
+  items: Array<{ name: string; code: string; quantity: number; price?: string }>;
+  total: number;
+}) {
+  const body = JSON.stringify(payload);
+
+  if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+    const queued = navigator.sendBeacon("/api/place-order", new Blob([body], { type: "application/json" }));
+    if (queued) return;
+  }
+
+  fetch("/api/place-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch((error) => {
+    console.error("[place-order] Failed to persist order:", error);
+  });
+}
+
+function openWhatsAppWithFallback(message: string) {
+  if (typeof window === "undefined") return;
+
+  const encodedMessage = encodeURIComponent(message);
+  const appUrl = `whatsapp://send?text=${encodedMessage}`;
+  const webUrl = `https://web.whatsapp.com/send?text=${encodedMessage}`;
+
+  let didLeavePage = false;
+
+  const cleanup = () => {
+    window.removeEventListener("blur", markLeftPage);
+    window.removeEventListener("pagehide", markLeftPage);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+
+  const markLeftPage = () => {
+    didLeavePage = true;
+    cleanup();
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      markLeftPage();
+    }
+  };
+
+  window.addEventListener("blur", markLeftPage, { once: true });
+  window.addEventListener("pagehide", markLeftPage, { once: true });
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  window.location.href = appUrl;
+
+  window.setTimeout(() => {
+    cleanup();
+    if (!didLeavePage && document.visibilityState === "visible") {
+      window.location.href = webUrl;
+    }
+  }, 1200);
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type LineItem = {
@@ -198,7 +261,7 @@ export function CartPageScreen() {
     return e;
   }
 
-  async function handlePlaceOrder() {
+  function handlePlaceOrder() {
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -214,37 +277,20 @@ export function CartPageScreen() {
     const orderCode = generateOrderCode();
     const message = buildMessage(orderCode, { name, businessName, address1, address2, zip, notes }, items, subtotal);
 
-    // 2. Open WhatsApp NOW — synchronous, guaranteed to work on Safari
-    if (typeof window !== "undefined") {
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, "_blank");
-    }
+    // 2. Persist order without blocking the click interaction.
+    persistOrder({
+      orderCode,
+      customer: { name, businessName, address1, address2, zip, notes },
+      items: items.map((i) => ({ name: i.name, code: i.code, quantity: i.quantity, price: i.price })),
+      total: subtotal,
+    });
 
-    // 3. Store order in Sanity via API (fire-and-forget is fine)
-    try {
-      const res = await fetch("/api/place-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderCode,
-          customer: { name, businessName, address1, address2, zip, notes },
-          items: items.map((i) => ({ name: i.name, code: i.code, quantity: i.quantity, price: i.price })),
-          total: subtotal,
-        }),
-      });
+    // 3. Try WhatsApp app first, then fall back to WhatsApp Web.
+    openWhatsAppWithFallback(message);
 
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error ?? "Something went wrong. Please try again.");
-        return;
-      }
-
-      setOrderCode(data.orderCode ?? orderCode);
-      clearCart();
-    } catch {
-      alert("Network error. Order was shared on WhatsApp but could not be saved. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    setOrderCode(orderCode);
+    clearCart();
+    setIsLoading(false);
   }
 
   return (
