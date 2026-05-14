@@ -23,6 +23,50 @@ function formatINR(n: number) {
   return `₹ ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function generateOrderCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  const now = new Date();
+  const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  return `IAF-${date}-${code}`;
+}
+
+function buildMessage(
+  orderCode: string,
+  customer: { name: string; businessName: string; address1: string; address2: string; zip: string; notes: string },
+  items: Array<{ name: string; code: string; quantity: number; price?: string }>,
+  total: number
+): string {
+  const lines: string[] = [];
+  lines.push(`🛒 *New Order — ${orderCode}*`);
+  lines.push("");
+  lines.push("👤 *Customer Details*");
+  lines.push(`Name: ${customer.name}`);
+  if (customer.businessName) lines.push(`Business: ${customer.businessName}`);
+  lines.push("");
+  lines.push("📦 *Order Items*");
+  items.forEach((item, i) => {
+    const priceNum = parseFloat((item.price ?? "0").replace(/[^\d.]/g, ""));
+    const lineTotal = isNaN(priceNum) ? "" : ` — ₹${(priceNum * item.quantity).toLocaleString("en-IN")}`;
+    lines.push(`${i + 1}. ${item.name} (${item.code}) × ${item.quantity}${lineTotal}`);
+  });
+  lines.push("");
+  lines.push(`💰 *Total: ${formatINR(total)}*`);
+  lines.push("");
+  lines.push("📍 *Shipping Address*");
+  if (customer.address1) lines.push(customer.address1);
+  if (customer.address2) lines.push(customer.address2);
+  if (customer.zip) lines.push(`Zip: ${customer.zip}`);
+  if (customer.notes) {
+    lines.push("");
+    lines.push(`📝 *Notes:* ${customer.notes}`);
+  }
+  return lines.join("\n");
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type LineItem = {
@@ -164,15 +208,24 @@ export function CartPageScreen() {
     setErrors({});
     setIsLoading(true);
 
-    // Open a blank window NOW (synchronously, while inside the click handler)
-    // so Safari's popup blocker allows it. We'll navigate it after the API call.
-    const waWin = typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
+    // 1. Generate order code + message CLIENT-SIDE so we can open WhatsApp
+    //    synchronously (before any await). Safari only allows window.open()
+    //    inside the same click-event tick.
+    const orderCode = generateOrderCode();
+    const message = buildMessage(orderCode, { name, businessName, address1, address2, zip, notes }, items, subtotal);
 
+    // 2. Open WhatsApp NOW — synchronous, guaranteed to work on Safari
+    if (typeof window !== "undefined") {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, "_blank");
+    }
+
+    // 3. Store order in Sanity via API (fire-and-forget is fine)
     try {
       const res = await fetch("/api/place-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          orderCode,
           customer: { name, businessName, address1, address2, zip, notes },
           items: items.map((i) => ({ name: i.name, code: i.code, quantity: i.quantity, price: i.price })),
           total: subtotal,
@@ -181,23 +234,14 @@ export function CartPageScreen() {
 
       const data = await res.json();
       if (!res.ok) {
-        waWin?.close();
         alert(data.error ?? "Something went wrong. Please try again.");
         return;
       }
 
-      // Navigate the already-opened window to WhatsApp
-      if (data.message && waWin) {
-        waWin.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(data.message)}`;
-      } else {
-        waWin?.close();
-      }
-
-      setOrderCode(data.orderCode);
+      setOrderCode(data.orderCode ?? orderCode);
       clearCart();
     } catch {
-      waWin?.close();
-      alert("Network error. Please check your connection and try again.");
+      alert("Network error. Order was shared on WhatsApp but could not be saved. Please try again.");
     } finally {
       setIsLoading(false);
     }

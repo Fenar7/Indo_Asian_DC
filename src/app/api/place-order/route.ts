@@ -93,7 +93,8 @@ async function storeOrderInSanity(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { customer, items, total } = body as {
+    const { orderCode: clientOrderCode, customer, items, total } = body as {
+      orderCode?: string;
       customer: { name: string; businessName: string; address1: string; address2: string; zip: string; notes: string };
       items: Array<{ name: string; code: string; quantity: number; price?: string }>;
       total: number;
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
     if (!customer?.name?.trim()) return NextResponse.json({ error: "Name is required" }, { status: 400 });
     if (!items?.length)           return NextResponse.json({ error: "Cart is empty" },     { status: 400 });
 
-    const orderCode = generateOrderCode();
+    const orderCode = clientOrderCode && clientOrderCode.trim() ? clientOrderCode.trim() : generateOrderCode();
     const message = buildMessage(orderCode, customer, items, total);
 
     console.log(`\n📦 Order ${orderCode} | ${customer.name} | Rs.${total}`);
