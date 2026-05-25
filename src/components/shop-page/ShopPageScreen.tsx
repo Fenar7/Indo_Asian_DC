@@ -503,10 +503,13 @@ function SearchBar({ placeholder, className, products, onSearch }: SearchBarProp
 type ProductCardProps = { product: SanityProduct; variant: "grid" | "list" };
 
 function ProductCard({ product, variant }: ProductCardProps) {
-  const { addToCart } = useCart();
+  const { items, addToCart, updateQuantity } = useCart();
+  const router = useRouter();
   const href = `/product/${product._id}`;
+  const cartItem = items.find((item) => item._id === product._id);
+  const quantity = cartItem?.quantity ?? 0;
 
-  function handleAddToCart(e: React.MouseEvent) {
+  function handleAddToCart(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     e.stopPropagation();
     addToCart({
@@ -520,71 +523,136 @@ function ProductCard({ product, variant }: ProductCardProps) {
     });
   }
 
-  if (variant === "list") {
+  function handleDecrease(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    updateQuantity(product._id, Math.max(0, quantity - 1));
+  }
+
+  function handleIncrease(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (quantity === 0) {
+      handleAddToCart(e);
+      return;
+    }
+    updateQuantity(product._id, quantity + 1);
+  }
+
+  function handleCardClick() {
+    router.push(href);
+  }
+
+  function handleCardKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      router.push(href);
+    }
+  }
+
+  function renderCartControl(isList = false) {
+    if (quantity < 1) {
+      return (
+        <button className="shop-product-card__add-btn" type="button" onClick={handleAddToCart}>
+          <span>Add to Cart</span>
+          <img alt="" src={plusIcon} />
+        </button>
+      );
+    }
+
     return (
-      <Link href={href} className="shop-product-card-link">
-        <article className="shop-product-card shop-product-card--list">
-          <div className="shop-product-card__media shop-product-card__media--list">
-            {product.image ? (
-              <img alt={product.name} src={product.image} />
-            ) : (
-              <NoImage />
-            )}
-          </div>
-          <div className="shop-product-card__content shop-product-card__content--list">
-            <div className="shop-product-card__head shop-product-card__head--list">
-              <div>
-                <h3>{product.name}</h3>
-                <p>Product code : {product.code}</p>
-              </div>
-              <span className="shop-product-card__badge">{product.badge}</span>
-            </div>
-            <dl className="shop-product-card__meta shop-product-card__meta--list">
-              <div><dt>Unit</dt><dd>{product.unit}</dd></div>
-              <div><dt>Weight</dt><dd>{product.weight}</dd></div>
-            </dl>
-            <div className="shop-product-card__footer shop-product-card__footer--list">
-              <p>{product.price}</p>
-              <button type="button" onClick={handleAddToCart}>
-                <span>Add to Cart</span>
-                <img alt="" src={plusIcon} />
-              </button>
-            </div>
-          </div>
-        </article>
-      </Link>
+      <div
+        className={`shop-product-card__quantity-control${isList ? " shop-product-card__quantity-control--list" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="shop-product-card__quantity-btn"
+          type="button"
+          aria-label={`Decrease quantity of ${product.name}`}
+          onClick={handleDecrease}
+        >
+          <img alt="" src={listQtyMinusIcon} />
+        </button>
+        <span className="shop-product-card__quantity-value" aria-live="polite">{quantity}</span>
+        <button
+          className="shop-product-card__quantity-btn shop-product-card__quantity-btn--plus"
+          type="button"
+          aria-label={`Increase quantity of ${product.name}`}
+          onClick={handleIncrease}
+        >
+          <img alt="" src={listQtyPlusIcon} />
+        </button>
+      </div>
     );
   }
 
-  return (
-    <Link href={href} className="shop-product-card-link">
-      <article className="shop-product-card">
-        <div className="shop-product-card__media">
+  if (variant === "list") {
+    return (
+      <article
+        className="shop-product-card shop-product-card--list shop-product-card--interactive"
+        role="link"
+        tabIndex={0}
+        onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
+      >
+        <div className="shop-product-card__media shop-product-card__media--list">
           {product.image ? (
             <img alt={product.name} src={product.image} />
           ) : (
             <NoImage />
           )}
         </div>
-        <div className="shop-product-card__content">
-          <div className="shop-product-card__head">
-            <h3>{product.name}</h3>
-            <p>Product code : {product.code}</p>
+        <div className="shop-product-card__content shop-product-card__content--list">
+          <div className="shop-product-card__head shop-product-card__head--list">
+            <div>
+              <h3>{product.name}</h3>
+              <p>Product code : {product.code}</p>
+            </div>
+            <span className="shop-product-card__badge">{product.badge}</span>
           </div>
-          <dl className="shop-product-card__meta">
+          <dl className="shop-product-card__meta shop-product-card__meta--list">
             <div><dt>Unit</dt><dd>{product.unit}</dd></div>
             <div><dt>Weight</dt><dd>{product.weight}</dd></div>
           </dl>
-          <div className="shop-product-card__footer">
+          <div className="shop-product-card__footer shop-product-card__footer--list">
             <p>{product.price}</p>
-            <button type="button" onClick={handleAddToCart}>
-              <span>Add to Cart</span>
-              <img alt="" src={plusIcon} />
-            </button>
+            {renderCartControl(true)}
           </div>
         </div>
       </article>
-    </Link>
+    );
+  }
+
+  return (
+    <article
+      className="shop-product-card shop-product-card--interactive"
+      role="link"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+    >
+      <div className="shop-product-card__media">
+        {product.image ? (
+          <img alt={product.name} src={product.image} />
+        ) : (
+          <NoImage />
+        )}
+      </div>
+      <div className="shop-product-card__content">
+        <div className="shop-product-card__head">
+          <h3>{product.name}</h3>
+          <p>Product code : {product.code}</p>
+        </div>
+        <dl className="shop-product-card__meta">
+          <div><dt>Unit</dt><dd>{product.unit}</dd></div>
+          <div><dt>Weight</dt><dd>{product.weight}</dd></div>
+        </dl>
+        <div className="shop-product-card__footer">
+          <p>{product.price}</p>
+          {renderCartControl()}
+        </div>
+      </div>
+    </article>
   );
 }
 
