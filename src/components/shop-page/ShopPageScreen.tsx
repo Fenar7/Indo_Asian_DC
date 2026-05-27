@@ -1,11 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { type CatalogMetadata } from "@/sanity/lib/catalog";
 import NoImage from "../common/NoImage";
 
 const brandLogo = "/icons/indo-asian-logo-main.png";
@@ -33,6 +34,7 @@ export type SanityCategory = {
   _id: string;
   name: string;
   order: number;
+  count?: number;
 };
 
 export type SanityProduct = {
@@ -54,6 +56,14 @@ export type ActiveFilters = {
   unit: Set<string>;
 };
 
+type ProductsApiResponse = {
+  products: SanityProduct[];
+  total: number;
+  hasMore: boolean;
+  nextOffset: number;
+  error?: string;
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function matchesQuery(product: SanityProduct, query: string): boolean {
@@ -67,7 +77,7 @@ function matchesQuery(product: SanityProduct, query: string): boolean {
   );
 }
 
-/** Parse a price string like "₹ 300.00" → 300.00. Returns null if unparseable. */
+/** Parse a price string like "£ 300.00" → 300.00. Returns null if unparseable. */
 function parsePrice(priceStr?: string): number | null {
   if (!priceStr) return null;
   const num = parseFloat(priceStr.replace(/[^\d.]/g, ""));
@@ -225,7 +235,7 @@ function PriceFilterPill({
           </div>
           <div className="filter-pill__price-row">
             <div className="filter-pill__price-field">
-              <label>Min (₹)</label>
+              <label>Min (£)</label>
               <input
                 min="0"
                 placeholder={minPrice !== null ? String(Math.floor(minPrice)) : "0"}
@@ -236,7 +246,7 @@ function PriceFilterPill({
             </div>
             <span className="filter-pill__price-dash">–</span>
             <div className="filter-pill__price-field">
-              <label>Max (₹)</label>
+              <label>Max (£)</label>
               <input
                 min="0"
                 placeholder={maxPrice !== null ? String(Math.ceil(maxPrice)) : "∞"}
@@ -723,7 +733,7 @@ function CartPanel() {
   const router = useRouter();
 
   const formatINR = (n: number) =>
-    `₹ ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    `£ ${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   // ── Loading skeleton — shown until localStorage has been read ──────────────
   if (!hydrated) {
@@ -856,44 +866,58 @@ function HeroSlider({ slides }: { slides: HeroSlide[] }) {
 export function ShopPageScreen({
   heroSlides,
   categories = [],
-  products = [],
+  initialProducts = [],
+  totalProductCount,
+  pageSize,
+  catalogMetadata,
 }: {
   heroSlides?: HeroSlide[];
   categories?: SanityCategory[];
-  products?: SanityProduct[];
+  initialProducts?: SanityProduct[];
+  totalProductCount: number;
+  pageSize: number;
+  catalogMetadata: CatalogMetadata;
 }) {
-  // Debug: log data received from server
-  useEffect(() => {
-    console.log("[ShopPageScreen] products:", products.length, "categories:", categories.length);
-    console.log("[ShopPageScreen] sample product:", products[0]);
-    console.log("[ShopPageScreen] sample category:", categories[0]);
-  }, [products, categories]);
-
   const { totalItems } = useCart();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Filter state
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [weightFilter, setWeightFilter] = useState<Set<string>>(new Set());
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [unitFilter, setUnitFilter] = useState<Set<string>>(new Set());
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  const [loadedProducts, setLoadedProducts] = useState<SanityProduct[]>(initialProducts);
+  const [resultTotal, setResultTotal] = useState(totalProductCount);
+  const [hasMore, setHasMore] = useState(initialProducts.length < totalProductCount);
+  const [nextOffset, setNextOffset] = useState(initialProducts.length);
+  const [isLoadingList, setIsLoadingList] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
+  const hasBootstrappedRef = useRef(false);
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
-  // Derive unique options from ALL products (not filtered), so dropdowns are always populated
-  const weightOptions = getUniqueValues(products, "weight");
-  const tagOptions = getUniqueValues(products, "badge");
-  const unitOptions = getUniqueValues(products, "unit");
-
-  // Derive global price bounds for placeholder hints
-  const allPrices = products.map((p) => parsePrice(p.price)).filter((n): n is number => n !== null);
-  const globalMinPrice = allPrices.length ? Math.min(...allPrices) : null;
-  const globalMaxPrice = allPrices.length ? Math.max(...allPrices) : null;
+  const weightOptions = useMemo(() => catalogMetadata.weightOptions, [catalogMetadata.weightOptions]);
+  const tagOptions = useMemo(() => catalogMetadata.tagOptions, [catalogMetadata.tagOptions]);
+  const unitOptions = useMemo(() => catalogMetadata.unitOptions, [catalogMetadata.unitOptions]);
+  const globalMinPrice = catalogMetadata.globalMinPrice;
+  const globalMaxPrice = catalogMetadata.globalMaxPrice;
 
   const totalActiveFilters =
     weightFilter.size + tagFilter.size + unitFilter.size +
     (priceMin !== "" ? 1 : 0) + (priceMax !== "" ? 1 : 0);
+
+  const hasActiveFilters = totalActiveFilters > 0 || debouncedSearchQuery !== "" || activeCategoryId !== null;
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   function clearAllFilters() {
     setWeightFilter(new Set());
@@ -901,6 +925,9 @@ export function ShopPageScreen({
     setUnitFilter(new Set());
     setPriceMin("");
     setPriceMax("");
+    setSearchQuery("");
+    setDebouncedSearchQuery("");
+    setActiveCategoryId(null);
   }
 
   function toggleSetFilter(setter: React.Dispatch<React.SetStateAction<Set<string>>>, val: string) {
@@ -911,49 +938,116 @@ export function ShopPageScreen({
     });
   }
 
-  // ── Filtering pipeline ────────────────────────────────────────────────────
+  const categoryCountMap = useMemo(() => {
+    return new Map(categories.map((category) => [category._id, category.count ?? 0]));
+  }, [categories]);
 
-  // 1. Category
-  const categoryFiltered = activeCategoryId
-    ? products.filter((p) => p.categoryId === activeCategoryId)
-    : products;
+  const buildProductsUrl = useCallback((offset: number) => {
+    const params = new URLSearchParams();
+    params.set("offset", String(offset));
+    params.set("limit", String(pageSize));
+    if (activeCategoryId) params.set("categoryId", activeCategoryId);
+    if (debouncedSearchQuery) params.set("search", debouncedSearchQuery);
+    if (weightFilter.size > 0) params.set("weights", Array.from(weightFilter).join(","));
+    if (tagFilter.size > 0) params.set("tags", Array.from(tagFilter).join(","));
+    if (unitFilter.size > 0) params.set("units", Array.from(unitFilter).join(","));
+    if (priceMin !== "") params.set("priceMin", priceMin);
+    if (priceMax !== "") params.set("priceMax", priceMax);
+    return `/api/products?${params.toString()}`;
+  }, [activeCategoryId, debouncedSearchQuery, pageSize, priceMax, priceMin, tagFilter, unitFilter, weightFilter]);
 
-  // 2. Search
-  const searchFiltered = searchQuery
-    ? categoryFiltered.filter((p) => matchesQuery(p, searchQuery))
-    : categoryFiltered;
+  const fetchProducts = useCallback(async (offset: number, mode: "replace" | "append") => {
+    const requestId = ++requestIdRef.current;
+    if (mode === "replace") {
+      setIsLoadingList(true);
+      setLoadError(null);
+    } else {
+      setIsLoadingMore(true);
+    }
 
-  // 3. Weight (OR within the set)
-  const weightFiltered =
-    weightFilter.size > 0
-      ? searchFiltered.filter((p) => p.weight && weightFilter.has(p.weight))
-      : searchFiltered;
+    try {
+      const response = await fetch(buildProductsUrl(offset), { cache: "no-store" });
+      const data = await response.json() as ProductsApiResponse;
 
-  // 4. Tag/Badge (OR within the set)
-  const tagFiltered =
-    tagFilter.size > 0
-      ? weightFiltered.filter((p) => p.badge && tagFilter.has(p.badge))
-      : weightFiltered;
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load products");
+      }
 
-  // 5. Unit (OR within the set)
-  const unitFiltered =
-    unitFilter.size > 0
-      ? tagFiltered.filter((p) => p.unit && unitFilter.has(p.unit))
-      : tagFiltered;
+      if (requestId !== requestIdRef.current) return;
 
-  // 6. Price range
-  const priceFiltered = unitFiltered.filter((p) => {
-    const price = parsePrice(p.price);
-    if (price === null) return true; // keep products with no price
-    if (priceMin !== "" && price < parseFloat(priceMin)) return false;
-    if (priceMax !== "" && price > parseFloat(priceMax)) return false;
-    return true;
-  });
+      setResultTotal(data.total);
+      setHasMore(data.hasMore);
+      setNextOffset(data.nextOffset);
+      setLoadError(null);
 
-  const filteredProducts = priceFiltered;
-  const visibleProducts = viewMode === "list" ? filteredProducts.slice(0, 4) : filteredProducts;
+      setLoadedProducts((prev) => {
+        if (mode === "replace") return data.products;
+        const merged = new Map(prev.map((product) => [product._id, product]));
+        data.products.forEach((product) => merged.set(product._id, product));
+        return Array.from(merged.values());
+      });
+    } catch (error) {
+      if (requestId !== requestIdRef.current) return;
+      setLoadError(error instanceof Error ? error.message : "Failed to load products");
+      if (mode === "replace") {
+        setLoadedProducts([]);
+        setResultTotal(0);
+        setHasMore(false);
+        setNextOffset(0);
+      }
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setIsLoadingList(false);
+        setIsLoadingMore(false);
+      }
+    }
+  }, [buildProductsUrl]);
 
-  const hasActiveFilters = totalActiveFilters > 0 || searchQuery !== "";
+  useEffect(() => {
+    const isInitialState = !activeCategoryId && !debouncedSearchQuery && weightFilter.size === 0 && tagFilter.size === 0 && unitFilter.size === 0 && priceMin === "" && priceMax === "";
+
+    if (!hasBootstrappedRef.current) {
+      hasBootstrappedRef.current = true;
+      if (isInitialState) return;
+    }
+
+    void fetchProducts(0, "replace");
+  }, [activeCategoryId, debouncedSearchQuery, fetchProducts, priceMax, priceMin, tagFilter, unitFilter, weightFilter]);
+
+  const visibleProducts = loadedProducts;
+
+  function handleLoadMore() {
+    if (!hasMore || isLoadingMore) return;
+    void fetchProducts(nextOffset, "append");
+  }
+
+  useEffect(() => {
+    const trigger = loadMoreTriggerRef.current;
+
+    if (!trigger || !hasMore || isLoadingList || isLoadingMore || loadError) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "240px 0px",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(trigger);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [handleLoadMore, hasMore, isLoadingList, isLoadingMore, loadError]);
 
   return (
     <section className="shop-page">
@@ -964,7 +1058,7 @@ export function ShopPageScreen({
           <p>INDO ASIAN FOODS LTD</p>
         </div>
         <div className="shop-page__header-actions">
-          <SearchBar placeholder="Search products…" products={products} onSearch={setSearchQuery} />
+          <SearchBar placeholder="Search products…" products={loadedProducts} onSearch={setSearchQuery} />
           <Link href="/cart-page" className="shop-cart-button">
             <img alt="" src={cartIcon} />
             {totalItems > 0 && <span>{totalItems}</span>}
@@ -984,10 +1078,10 @@ export function ShopPageScreen({
               onClick={() => setActiveCategoryId(null)}
               type="button"
             >
-              All ({products.length})
+              All ({totalProductCount})
             </button>
             {categories.map((cat) => {
-              const count = products.filter((p) => p.categoryId === cat._id).length;
+              const count = categoryCountMap.get(cat._id) ?? 0;
               return (
                 <button
                   key={cat._id}
@@ -1076,10 +1170,10 @@ export function ShopPageScreen({
               onClick={() => setActiveCategoryId(null)}
               type="button"
             >
-              All ({products.length})
+              All ({totalProductCount})
             </button>
             {categories.map((cat) => {
-              const count = products.filter((p) => p.categoryId === cat._id).length;
+              const count = categoryCountMap.get(cat._id) ?? 0;
               return (
                 <button
                   key={cat._id}
@@ -1101,18 +1195,31 @@ export function ShopPageScreen({
                 {hasActiveFilters ? "Filtered Products" : "Showing All Products"}
               </h2>
               <p>
-                <span>{filteredProducts.length}</span> Products Available
+                <span>{resultTotal}</span> Products Available
               </p>
             </div>
             <SearchBar
               className="shop-results__search"
               placeholder="Search products…"
-              products={products}
+              products={loadedProducts}
               onSearch={setSearchQuery}
             />
           </div>
 
-          {filteredProducts.length === 0 && (
+          {loadError && (
+            <div className="shop-results__empty">
+              <p>{loadError}</p>
+              <button
+                className="shop-results__empty-reset"
+                onClick={() => void fetchProducts(0, "replace")}
+                type="button"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {!loadError && !isLoadingList && visibleProducts.length === 0 && (
             <div className="shop-results__empty">
               <p>No products match the current filters.</p>
               <button
@@ -1130,6 +1237,19 @@ export function ShopPageScreen({
               <ProductCard key={product._id} product={product} variant={viewMode} />
             ))}
           </div>
+
+          {isLoadingList && (
+            <div className="shop-results__loading">
+              <p>Loading products…</p>
+            </div>
+          )}
+
+          {!loadError && hasMore && (
+            <div className="shop-results__load-more">
+              <div ref={loadMoreTriggerRef} aria-hidden="true" />
+              {isLoadingMore && <p>Loading more products…</p>}
+            </div>
+          )}
         </div>
 
         <aside className="shop-cart-panel">

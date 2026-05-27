@@ -15,7 +15,7 @@ function generateOrderCode(): string {
 }
 
 function formatINR(n: number): string {
-  return `Rs. ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `£ ${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function buildMessage(
@@ -34,7 +34,7 @@ function buildMessage(
   lines.push("📦 *Order Items*");
   items.forEach((item, i) => {
     const priceNum = parseFloat((item.price ?? "0").replace(/[^\d.]/g, ""));
-    const lineTotal = isNaN(priceNum) ? "" : ` — Rs.${(priceNum * item.quantity).toLocaleString("en-IN")}`;
+    const lineTotal = isNaN(priceNum) ? "" : ` — £${(priceNum * item.quantity).toLocaleString("en-GB")}`;
     lines.push(`${i + 1}. ${item.name} (${item.code}) × ${item.quantity}${lineTotal}`);
   });
   lines.push("");
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     const orderCode = clientOrderCode && clientOrderCode.trim() ? clientOrderCode.trim() : generateOrderCode();
     const message = buildMessage(orderCode, customer, items, total);
 
-    console.log(`\n📦 Order ${orderCode} | ${customer.name} | Rs.${total}`);
+    console.log(`\n📦 Order ${orderCode} | ${customer.name} | £${total}`);
 
     // Store order in Sanity (always)
     storeOrderInSanity(orderCode, customer, total).catch((e) =>

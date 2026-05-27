@@ -85,7 +85,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
               addToCart({
                 _id: product._id,
                 name: product.name,
-                price: product.price || "₹ 0",
+                price: product.price || "£ 0",
                 image: product.image,
                 code: product.code,
                 weight: product.weight
@@ -185,7 +185,7 @@ function ProductSummary({ product }: { product: ProductDetailData }) {
               addToCart({
                 _id: product._id,
                 name: product.name,
-                price: product.price || "₹ 0",
+                price: product.price || "£ 0",
                 image: product.image,
                 code: product.code,
                 weight: product.weight

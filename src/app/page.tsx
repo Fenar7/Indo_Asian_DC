@@ -6,50 +6,39 @@ import {
   SanityProduct,
 } from "@/components/shop-page/ShopPageScreen";
 import { client } from "@/sanity/lib/client";
-import { unstable_noStore } from "next/cache";
+import {
+  CATALOG_PAGE_SIZE,
+  type CatalogMetadata,
+  categoriesWithCountsQuery,
+  deriveCatalogMetadata,
+  heroQuery,
+  productMetadataQuery,
+  productProjection,
+  totalProductCountQuery,
+} from "@/sanity/lib/catalog";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function Home() {
-  unstable_noStore(); // ensure fresh Sanity data on every request
-
-  // Hero Slider query
-  const heroQuery = `*[_type == "heroSlider"][0].images[]{
-    "id": _key,
-    "image": asset->url,
-    alt
-  }`;
-
-  // Categories query — sorted by order field ascending
-  const categoriesQuery = `*[_type == "category"] | order(order asc) {
-    _id,
-    name,
-    order
-  }`;
-
-  // Products query — with resolved category reference and image URL
-  const productsQuery = `*[_type == "product"] | order(_createdAt asc) {
-    _id,
-    name,
-    "slug": slug.current,
-    code,
-    unit,
-    weight,
-    price,
-    badge,
-    "image": image.asset->url,
-    "categoryId": category._ref
-  }`;
-
   let fetchedSlides: HeroSlide[] | undefined;
   let fetchedCategories: SanityCategory[] = [];
-  let fetchedProducts: SanityProduct[] = [];
+  let initialProducts: SanityProduct[] = [];
+  let totalProductCount = 0;
+  let catalogMetadata: CatalogMetadata = {
+    weightOptions: [],
+    tagOptions: [],
+    unitOptions: [],
+    globalMinPrice: null,
+    globalMaxPrice: null,
+  };
 
   try {
-    const [heroData, categoriesData, productsData] = await Promise.all([
+    const [heroData, categoriesData, metadataProducts, totalCount, productsData] = await Promise.all([
       client.fetch(heroQuery),
-      client.fetch(categoriesQuery),
-      client.fetch(productsQuery),
+      client.fetch(categoriesWithCountsQuery),
+      client.fetch(productMetadataQuery),
+      client.fetch(totalProductCountQuery),
+      client.fetch(`*[_type == "product"] | order(_createdAt asc)[0...$limit] ${productProjection}`, { limit: CATALOG_PAGE_SIZE }),
     ]);
 
     if (heroData && Array.isArray(heroData) && heroData.length > 0) {
@@ -58,9 +47,14 @@ export default async function Home() {
     if (categoriesData && Array.isArray(categoriesData)) {
       fetchedCategories = categoriesData;
     }
+    if (metadataProducts && Array.isArray(metadataProducts)) {
+      catalogMetadata = deriveCatalogMetadata(metadataProducts);
+    }
+    if (typeof totalCount === "number") {
+      totalProductCount = totalCount;
+    }
     if (productsData && Array.isArray(productsData)) {
-      fetchedProducts = productsData;
-      console.log("[Server] products:", fetchedProducts.length, "sample categoryId:", fetchedProducts[0]?.categoryId);
+      initialProducts = productsData;
     }
   } catch (error) {
     console.error("Failed to fetch data from Sanity:", error);
@@ -70,9 +64,12 @@ export default async function Home() {
     <div className="shop-page-container-main flex items-center justify-center">
       <div className="shop-page-container container">
         <ShopPageScreen
+          catalogMetadata={catalogMetadata}
           heroSlides={fetchedSlides}
           categories={fetchedCategories}
-          products={fetchedProducts}
+          initialProducts={initialProducts}
+          pageSize={CATALOG_PAGE_SIZE}
+          totalProductCount={totalProductCount}
         />
       </div>
     </div>

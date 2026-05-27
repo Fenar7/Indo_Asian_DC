@@ -20,7 +20,7 @@ const searchIcon  = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/200
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatINR(n: number) {
-  return `₹ ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `£ ${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function generateOrderCode(): string {
@@ -50,7 +50,7 @@ function buildMessage(
   lines.push("📦 *Order Items*");
   items.forEach((item, i) => {
     const priceNum = parseFloat((item.price ?? "0").replace(/[^\d.]/g, ""));
-    const lineTotal = isNaN(priceNum) ? "" : ` — ₹${(priceNum * item.quantity).toLocaleString("en-IN")}`;
+    const lineTotal = isNaN(priceNum) ? "" : ` — £${(priceNum * item.quantity).toLocaleString("en-GB")}`;
     lines.push(`${i + 1}. ${item.name} (${item.code}) × ${item.quantity}${lineTotal}`);
   });
   lines.push("");

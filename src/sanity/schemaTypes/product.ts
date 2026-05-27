@@ -46,7 +46,7 @@ export const productType = defineType({
       name: "price",
       title: "Price",
       type: "string",
-      description: "e.g. ₹ 300.00",
+      description: "e.g. £ 300.00",
     }),
     defineField({
       name: "badge",
