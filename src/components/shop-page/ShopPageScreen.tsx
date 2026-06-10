@@ -899,6 +899,37 @@ export function ShopPageScreen({
   const hasBootstrappedRef = useRef(false);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
+  // ── Category chip-row scroll arrows ──────────────────────────────────────
+  const chipRowRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+
+  const updateChipArrows = useCallback(() => {
+    const el = chipRowRef.current;
+    if (!el) return;
+    setShowLeftArrow(el.scrollLeft > 4);
+    setShowRightArrow(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = chipRowRef.current;
+    if (!el) return;
+    updateChipArrows();
+    el.addEventListener("scroll", updateChipArrows, { passive: true });
+    const ro = new ResizeObserver(updateChipArrows);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateChipArrows);
+      ro.disconnect();
+    };
+  }, [updateChipArrows]);
+
+  function scrollChips(direction: "left" | "right") {
+    const el = chipRowRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction === "left" ? -240 : 240, behavior: "smooth" });
+  }
+
   const weightOptions = useMemo(() => catalogMetadata.weightOptions, [catalogMetadata.weightOptions]);
   const tagOptions = useMemo(() => catalogMetadata.tagOptions, [catalogMetadata.tagOptions]);
   const unitOptions = useMemo(() => catalogMetadata.unitOptions, [catalogMetadata.unitOptions]);
@@ -1072,7 +1103,21 @@ export function ShopPageScreen({
       {/* ── Category chip row ── */}
       {categories.length > 0 && (
         <div className="shop-chip-row-outer">
-          <div className="shop-chip-row" role="tablist">
+          {/* Left scroll arrow — desktop only */}
+          {showLeftArrow && (
+            <button
+              aria-label="Scroll categories left"
+              className="shop-chip-arrow shop-chip-arrow--left"
+              type="button"
+              onClick={() => scrollChips("left")}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          )}
+
+          <div className="shop-chip-row" ref={chipRowRef} role="tablist">
             <button
               className={activeCategoryId === null ? "is-active" : ""}
               onClick={() => setActiveCategoryId(null)}
@@ -1094,6 +1139,20 @@ export function ShopPageScreen({
               );
             })}
           </div>
+
+          {/* Right scroll arrow — desktop only */}
+          {showRightArrow && (
+            <button
+              aria-label="Scroll categories right"
+              className="shop-chip-arrow shop-chip-arrow--right"
+              type="button"
+              onClick={() => scrollChips("right")}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          )}
         </div>
       )}
 

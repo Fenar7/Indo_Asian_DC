@@ -348,20 +348,72 @@
   }
 }
 
-// On desktop: outer wrappers are layout-transparent
+// On desktop: outer wrapper is sticky row that holds chip strip + arrows
 .shop-chip-row-outer {
-  display: contents; // invisible box — children behave as direct children of parent
+  position: sticky;
+  top: 101px;
+  z-index: 190;
+  background: $pure-white;
+  display: flex;
+  align-items: flex-start;   /* arrows use margin-top to align with chip pill centre */
+  gap: 0;
 }
 
 .shop-filter-bar-outer {
   display: contents; // invisible box on desktop
 }
 
-.shop-chip-row {
-  position: sticky;
-  top: 101px;           /* stick just below the header */
-  z-index: 190;
+// Desktop scroll arrow buttons
+.shop-chip-arrow {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid $stroke-grey;
   background: $pure-white;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.15s ease;
+  z-index: 1;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: $hash-grey-2;
+    transition: color 0.18s ease;
+  }
+
+  &:hover {
+    border-color: $main-cta-red;
+    background: rgba($main-cta-red, 0.05);
+    box-shadow: 0 3px 14px rgba($main-cta-red, 0.15);
+    transform: scale(1.06);
+    svg { color: $main-cta-red; }
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  // Nudge arrows down to visually align with the chip pill centre.
+  // Chip row: padding-top 24px + pill height 43px → pill centre at 24 + 21.5 = 45.5px
+  // Arrow height 36px → arrow top edge should be at 45.5 - 18 = 27.5px ≈ 28px
+  align-self: flex-start;
+  margin-top: 28px;
+
+  &--left  { margin-right: 8px; }
+  &--right { margin-left:  8px; }
+}
+
+.shop-chip-row {
+  position: static;       /* outer handles sticky */
+  top: auto;
+  z-index: auto;
+  background: transparent;
+  flex: 1 1 auto;         /* grow inside the outer wrapper */
   display: flex;
   gap: 20px;
   overflow-x: auto;
@@ -1822,14 +1874,14 @@
     margin: 10px 16px 0;
   }
 
-  // ── Chip row outer: carries sticky + provides anchor for the arrow hint ──
+  // ── Chip row outer: override desktop flex → block for mobile sticky ──
   .shop-chip-row-outer {
-    display: block;      // override desktop display:contents — needed for ::after
+    display: block;      // override desktop flex — simpler for mobile sticky
     position: sticky;
-    top: 114px;          // inherit sticky from chip-row
+    top: 114px;          // sticky position on mobile
     z-index: 190;
     background: $pure-white;
-    // Scroll hint arrow — matches design stroke style
+    // Scroll hint arrow (CSS only, non-interactive — touch swipe works)
     &::after {
       content: '\203A';
       position: absolute;
@@ -1850,6 +1902,11 @@
       color: #555555;
       pointer-events: none;
     }
+  }
+
+  // Hide interactive desktop arrows on mobile — touch-swipe is used instead
+  .shop-chip-arrow {
+    display: none;
   }
 
   // ── Chip row: no longer carries sticky (outer does it) ──
