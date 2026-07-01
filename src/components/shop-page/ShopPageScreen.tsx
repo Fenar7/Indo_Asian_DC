@@ -889,6 +889,7 @@ export function ShopPageScreen({
   totalProductCount,
   pageSize,
   catalogMetadata,
+  hasNewArrivals,
 }: {
   heroSlides?: HeroSlide[];
   categories?: SanityCategory[];
