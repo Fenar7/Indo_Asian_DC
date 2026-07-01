@@ -61,6 +61,13 @@ export const productType = defineType({
       to: [{ type: "category" }],
       description: "Select the category this product belongs to.",
     }),
+    defineField({
+      name: "outOfStock",
+      title: "Out of Stock",
+      type: "boolean",
+      description: "Toggle on if the product is currently out of stock.",
+      initialValue: false,
+    }),
   ],
   preview: {
     select: {

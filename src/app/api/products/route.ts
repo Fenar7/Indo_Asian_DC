@@ -13,6 +13,7 @@ type ProductRecord = {
   weight?: string;
   price?: string;
   badge?: string;
+  outOfStock?: boolean;
   image?: string;
   categoryId?: string;
 };

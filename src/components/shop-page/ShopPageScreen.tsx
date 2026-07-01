@@ -46,6 +46,7 @@ export type SanityProduct = {
   weight?: string;
   price?: string;
   badge?: string;
+  outOfStock?: boolean;
   image?: string;
   categoryId?: string;
 };
@@ -561,6 +562,14 @@ function ProductCard({ product, variant }: ProductCardProps) {
   }
 
   function renderCartControl(isList = false) {
+    if (product.outOfStock) {
+      return (
+        <button className="shop-product-card__add-btn shop-product-card__add-btn--disabled" type="button" disabled>
+          <span>Out of Stock</span>
+        </button>
+      );
+    }
+
     if (quantity < 1) {
       return (
         <button className="shop-product-card__add-btn" type="button" onClick={handleAddToCart}>
@@ -599,17 +608,22 @@ function ProductCard({ product, variant }: ProductCardProps) {
   if (variant === "list") {
     return (
       <article
-        className="shop-product-card shop-product-card--list shop-product-card--interactive"
+        className={`shop-product-card shop-product-card--list shop-product-card--interactive ${product.outOfStock ? 'shop-product-card--out-of-stock' : ''}`}
         role="link"
-        tabIndex={0}
-        onClick={handleCardClick}
-        onKeyDown={handleCardKeyDown}
+        tabIndex={product.outOfStock ? -1 : 0}
+        onClick={product.outOfStock ? undefined : handleCardClick}
+        onKeyDown={product.outOfStock ? undefined : handleCardKeyDown}
       >
         <div className="shop-product-card__media shop-product-card__media--list">
           {product.image ? (
             <img alt={product.name} src={product.image} />
           ) : (
             <NoImage />
+          )}
+          {product.outOfStock && (
+            <div className="shop-product-card__oos-overlay">
+              <span>OUT OF STOCK</span>
+            </div>
           )}
         </div>
         <div className="shop-product-card__content shop-product-card__content--list">
@@ -635,17 +649,22 @@ function ProductCard({ product, variant }: ProductCardProps) {
 
   return (
     <article
-      className="shop-product-card shop-product-card--interactive"
+      className={`shop-product-card shop-product-card--interactive ${product.outOfStock ? 'shop-product-card--out-of-stock' : ''}`}
       role="link"
-      tabIndex={0}
-      onClick={handleCardClick}
-      onKeyDown={handleCardKeyDown}
+      tabIndex={product.outOfStock ? -1 : 0}
+      onClick={product.outOfStock ? undefined : handleCardClick}
+      onKeyDown={product.outOfStock ? undefined : handleCardKeyDown}
     >
       <div className="shop-product-card__media">
         {product.image ? (
           <img alt={product.name} src={product.image} />
         ) : (
           <NoImage />
+        )}
+        {product.outOfStock && (
+          <div className="shop-product-card__oos-overlay">
+            <span>OUT OF STOCK</span>
+          </div>
         )}
       </div>
       <div className="shop-product-card__content">
@@ -877,12 +896,21 @@ export function ShopPageScreen({
   totalProductCount: number;
   pageSize: number;
   catalogMetadata: CatalogMetadata;
+  hasNewArrivals?: boolean;
 }) {
   const { totalItems } = useCart();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [isMobileCategoryModalOpen, setIsMobileCategoryModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    if (query.trim() !== "") {
+      setActiveCategoryId(null);
+    }
+  }, []);
   const [weightFilter, setWeightFilter] = useState<Set<string>>(new Set());
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [unitFilter, setUnitFilter] = useState<Set<string>>(new Set());
@@ -897,6 +925,29 @@ export function ShopPageScreen({
   const [loadError, setLoadError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
   const hasBootstrappedRef = useRef(false);
+
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => {
+      const aName = a.name.toUpperCase();
+      const bName = b.name.toUpperCase();
+      
+      const getRank = (name: string) => {
+        if (name.includes("VISWAS")) return 1;
+        if (name.includes("EASTERN")) return 2;
+        if (name.includes("DAILY DELIGHT") || name.startsWith("DD ") || name.includes(" DD ")) return 3;
+        return 4;
+      };
+      
+      const aRank = getRank(aName);
+      const bRank = getRank(bName);
+      
+      if (aRank !== bRank) {
+        return aRank - bRank;
+      }
+      
+      return aName.localeCompare(bName);
+    });
+  }, [categories]);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
   // ── Category chip-row scroll arrows ──────────────────────────────────────
@@ -1089,7 +1140,12 @@ export function ShopPageScreen({
           <p>INDO ASIAN FOODS LTD</p>
         </div>
         <div className="shop-page__header-actions">
-          <SearchBar placeholder="Search products…" products={loadedProducts} onSearch={setSearchQuery} />
+          {hasNewArrivals && (
+            <Link href="/new-arrivals" className="shop-new-arrivals-link">
+              New Arrivals
+            </Link>
+          )}
+          <SearchBar placeholder="Search products…" products={loadedProducts} onSearch={handleSearch} />
           <Link href="/cart-page" className="shop-cart-button">
             <img alt="" src={cartIcon} />
             {totalItems > 0 && <span>{totalItems}</span>}
@@ -1119,13 +1175,18 @@ export function ShopPageScreen({
 
           <div className="shop-chip-row" ref={chipRowRef} role="tablist">
             <button
-              className={activeCategoryId === null ? "is-active" : ""}
-              onClick={() => setActiveCategoryId(null)}
+              className="shop-chip-categories-btn"
+              onClick={() => setIsMobileCategoryModalOpen(true)}
               type="button"
             >
-              All ({totalProductCount})
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" width="16" height="16" style={{ marginRight: 6 }}>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+              Categories
             </button>
-            {categories.map((cat) => {
+            {sortedCategories.map((cat) => {
               const count = categoryCountMap.get(cat._id) ?? 0;
               return (
                 <button
@@ -1138,6 +1199,13 @@ export function ShopPageScreen({
                 </button>
               );
             })}
+            <button
+              className={activeCategoryId === null ? "is-active" : ""}
+              onClick={() => setActiveCategoryId(null)}
+              type="button"
+            >
+              All ({totalProductCount})
+            </button>
           </div>
 
           {/* Right scroll arrow — desktop only */}
@@ -1224,14 +1292,7 @@ export function ShopPageScreen({
       <section className="shop-catalog">
         <aside className="shop-sidebar">
           <div className="shop-sidebar__inner">
-            <button
-              className={activeCategoryId === null ? "is-active" : ""}
-              onClick={() => setActiveCategoryId(null)}
-              type="button"
-            >
-              All ({totalProductCount})
-            </button>
-            {categories.map((cat) => {
+            {sortedCategories.map((cat) => {
               const count = categoryCountMap.get(cat._id) ?? 0;
               return (
                 <button
@@ -1244,6 +1305,13 @@ export function ShopPageScreen({
                 </button>
               );
             })}
+            <button
+              className={activeCategoryId === null ? "is-active" : ""}
+              onClick={() => setActiveCategoryId(null)}
+              type="button"
+            >
+              All ({totalProductCount})
+            </button>
           </div>
         </aside>
 
@@ -1261,7 +1329,7 @@ export function ShopPageScreen({
               className="shop-results__search"
               placeholder="Search products…"
               products={loadedProducts}
-              onSearch={setSearchQuery}
+              onSearch={handleSearch}
             />
           </div>
 
@@ -1318,6 +1386,41 @@ export function ShopPageScreen({
           </div>
         </aside>
       </section>
+
+      {/* ── Mobile Category Drawer ── */}
+      {isMobileCategoryModalOpen && (
+        <div className="shop-mobile-category-drawer">
+          <div className="shop-mobile-category-drawer__backdrop" onClick={() => setIsMobileCategoryModalOpen(false)} />
+          <div className="shop-mobile-category-drawer__content">
+            <div className="shop-mobile-category-drawer__header">
+              <h2>Categories</h2>
+              <button onClick={() => setIsMobileCategoryModalOpen(false)} aria-label="Close categories">✕</button>
+            </div>
+            <div className="shop-mobile-category-drawer__body">
+              {sortedCategories.map((cat) => {
+                const count = categoryCountMap.get(cat._id) ?? 0;
+                return (
+                  <button
+                    key={cat._id}
+                    className={activeCategoryId === cat._id ? "is-active" : ""}
+                    onClick={() => { setActiveCategoryId(cat._id); setIsMobileCategoryModalOpen(false); }}
+                    type="button"
+                  >
+                    {cat.name} ({count})
+                  </button>
+                );
+              })}
+              <button
+                className={activeCategoryId === null ? "is-active" : ""}
+                onClick={() => { setActiveCategoryId(null); setIsMobileCategoryModalOpen(false); }}
+                type="button"
+              >
+                All ({totalProductCount})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

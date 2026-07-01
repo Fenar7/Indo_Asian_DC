@@ -50,6 +50,7 @@ export const productProjection = `{
   weight,
   price,
   badge,
+  outOfStock,
   "image": image.asset->url,
   "categoryId": category._ref
 }`;
@@ -75,3 +76,8 @@ export const productMetadataQuery = `*[_type == "product"] {
 }`;
 
 export const totalProductCountQuery = `count(*[_type == "product"])`;
+
+export const newArrivalsQuery = `*[_type == "newArrivals"][0].images[]{
+  "id": _key,
+  "image": asset->url
+}`;
