@@ -927,91 +927,9 @@ export function ShopPageScreen({
   const requestIdRef = useRef(0);
   const hasBootstrappedRef = useRef(false);
 
-const CATEGORY_ORDER = [
-  "VISWAS FROZEN SNACKS",
-  "VISWAS FROZEN BREADS & BREAKFAST",
-  "VISWAS FROZEN VEG & RAW ITEMS",
-  "VISWAS FROZEN CURRYS & THORAN",
-  "VISWAS SNACKS",
-  "VISWAS POWDERS & FLAKES",
-  "VISWAS MASALAS & SPICES",
-  "VISWAS PICKLES",
-  "VISWAS CAKES",
-  "VISWAS OTHER",
-  "DAILY DELIGHT FROZEN SNACKS",
-  "DAILY DELIGHT VEG & RAW FOODS",
-  "DAILY DELIGHT BREADS & BREAKFAST",
-  "DAILY DELIGHT SNACKS",
-  "DAILY DELIGHT CURRYS & THOORAN",
-  "DAILY DELIGHT FISH",
-  "DAILY DELIGHT OTHER",
-  "PERIYAR POWDERS & RICE",
-  "CRISPY",
-  "MALABAR CHOICE",
-  "MC PULSES & SPICES",
-  "MC RICES",
-  "MC OILS",
-  "MC POWDERS, FLAKES & OTHER",
-  "EASTERN MASALA & OTHERS",
-  "EASTERN POWDERS",
-  "EASTERN PICKLES",
-  "DOUBLE HORSE",
-  "ID",
-  "MELAM",
-  "KERALA TASTE",
-  "MARINE FRESH",
-  "NEPTUNE FROZEN FISH",
-  "FISH FROZEN OTHER",
-  "SHANA",
-  "MAGIC TASTES",
-  "PULVERA",
-  "TN Fish stuff",
-  "HALDIRAM",
-  "ROYAL DELICASY",
-  "SARAS",
-  "MAYIL",
-  "TYJ",
-  "TASTY NIBBLES",
-  "PARLE",
-  "GRB",
-  "TOWN BUS",
-  "MAGGI",
-  "RICES (ALL BRANDS)",
-  "CROCKERY",
-  "OTHER ITEMS"
-].map(c => c.toUpperCase().trim());
-
+  // We now rely on Sanity's "order(order asc)" query to provide the correct sorting
   const sortedCategories = useMemo(() => {
-    return [...categories].sort((a, b) => {
-      const aName = a.name.toUpperCase().trim();
-      const bName = b.name.toUpperCase().trim();
-      
-      const getRank = (name: string) => {
-        const index = CATEGORY_ORDER.indexOf(name);
-        if (index !== -1) {
-          return index;
-        }
-        
-        // Fuzzy match for minor spelling differences
-        const fuzzyIndex = CATEGORY_ORDER.findIndex(cat => cat.includes(name) || name.includes(cat));
-        if (fuzzyIndex !== -1) {
-            return fuzzyIndex;
-        }
-
-        // Unknown categories go after RICES (ALL BRANDS)
-        const ricesIndex = CATEGORY_ORDER.indexOf("RICES (ALL BRANDS)");
-        return ricesIndex !== -1 ? ricesIndex + 0.5 : CATEGORY_ORDER.length;
-      };
-      
-      const aRank = getRank(aName);
-      const bRank = getRank(bName);
-      
-      if (aRank !== bRank) {
-        return aRank - bRank;
-      }
-      
-      return aName.localeCompare(bName);
-    });
+    return [...categories];
   }, [categories]);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
